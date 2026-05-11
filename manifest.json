@@ -1,0 +1,14 @@
+{
+  "name": "quant-china",
+  "version": "1.0.0",
+  "description": "A股量化分析工具箱 - 整合行情数据、技术指标、形态识别、策略回测",
+  "author": "merged from mpquant/MyTT, mpquant/Ashare, KlangAlpha/Klang, ScottZt/jin-ce-zhi-suan, johncui9392/Aeolus",
+  "license": "MIT",
+  "skills": [
+    {
+      "name": "quant-china",
+      "description": "A股量化分析",
+      "scripts": ["bin/quant.py"]
+    }
+  ]
+}
