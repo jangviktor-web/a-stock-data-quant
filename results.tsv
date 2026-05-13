@@ -1,3 +1,4 @@
 2026-05-13T22:59	0c59db7	quant-china	78.6	79.3	keep	explore	探索性重写：决策树+场景模板+TL;DR	dry_run
 2026-05-13T23:04	2d333e4	quant-china	79.3	82.3	keep	merge	探索性重写+检查点+输出映射合并	dry_run
 2026-05-13T23:17	full_test	quant-china	82.3	84.3	keep	实测表现	full_test: 3/3完成vs1/3, 15s vs 90s+	full_test
+2026-05-13T23:25	6a595ac	quant-china	84.3	89.5	keep	final	补充输出示例+复合场景+异常处理+数据流向图	dry_run
