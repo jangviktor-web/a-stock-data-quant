@@ -1,6 +1,6 @@
 ---
 name: quant-china
-description: "A股量化分析工具箱。触发词：量化、选股、回测、技术分析、股票对比、市场扫描、均线、MACD、RSI、KDJ、布林带、资金流向、形态识别。用途：分析单只股票技术面、对比多只股票、回测交易策略、扫描市场热点、查看资金流向。入口：python3 bin/quant.py <命令> <股票代码>"
+description: "A股量化分析工具箱。触发词：量化、选股、回测、技术分析、股票对比、市场扫描、均线、MACD、RSI、KDJ、布林带、资金流向、形态识别、实时行情、搜索股票、东方财富、AI诊断、AI选股、AI问答。用途：分析单只股票技术面、对比多只股票、回测交易策略、扫描市场热点、查看资金流向、实时报价、AI金融分析。入口：python3 bin/quant.py <命令> <股票代码>。支持 --html 输出交互式图表。em-* 命令调用东方财富妙想AI。realtime/search 命令基于腾讯/东方财富实时接口。"
 ---
 
 # quant-china — A股量化分析工具箱
@@ -22,6 +22,14 @@ python3 bin/quant.py compare sh600519,sz000858,sh601212
 
 # 回测策略
 python3 bin/quant.py backtest sh510500 --strategy ensemble
+
+# 输出HTML图表（交互式K线+信号+交易明细）
+python3 bin/quant.py analyze sh600519 --html
+python3 bin/quant.py backtest sh510500 --strategy ensemble --html
+
+# 数据缓存管理
+python3 bin/quant.py cache stats
+python3 bin/quant.py cache clear
 ```
 
 ---
@@ -522,6 +530,96 @@ quant-china/
     ↓
 结果解读 + 行动建议（检查点B）
 ```
+
+## 新增功能（基于 stock-quant + Aeolus 优化）
+
+### 股票综合诊断 (diagnose)
+借鉴 Aeolus stock-diagnosis 设计，整合技术面评分 + 资金面分析 + 基本面数据 + 形态识别，输出综合诊断结论。
+```bash
+python3 bin/quant.py diagnose sh600519
+python3 bin/quant.py diagnose sh518850
+```
+
+### 宏观数据查询 (macro)
+借鉴 Aeolus MX_MacroData 设计，通过 akshare 免费接口查询中国宏观经济数据。
+```bash
+python3 bin/quant.py macro cpi       # CPI
+python3 bin/quant.py macro pmi       # PMI
+python3 bin/quant.py macro gdp       # GDP
+python3 bin/quant.py macro m2        # M2货币供应
+python3 bin/quant.py macro lpr       # LPR利率
+python3 bin/quant.py macro unemployment  # 失业率
+python3 bin/quant.py macro trade     # 进出口
+python3 bin/quant.py macro industrial    # 工业增加值
+```
+
+### 市场热点扫描 (hotspot)
+借鉴 Aeolus stock-market-hotspot-discovery 设计，扫描人气榜、概念板块、行业板块涨幅榜。
+```bash
+python3 bin/quant.py hotspot
+python3 bin/quant.py hotspot --top 30
+```
+
+### HTML 图表输出
+`analyze` 和 `backtest` 支持 `--html` 参数，生成交互式 HTML 图表（K线+均线+信号标注+交易明细），文件保存在 `html/` 目录。
+
+### 数据缓存
+自动缓存行情数据到 `cache/` 目录，4小时内不重复请求。使用 `cache stats` 查看缓存状态，`cache clear` 清理。
+
+### 配置管理
+通过 `config.yaml` 集中管理参数（资金、手续费、缓存等），命令行参数优先。
+
+### 编码修复
+自动设置 UTF-8 编码，解决 Windows 下 emoji 字符显示问题。
+
+### 实时行情 (realtime)
+基于 stock-api 协议，集成腾讯/东方财富实时行情接口，无需 akshare。
+```bash
+# 实时报价（腾讯数据源，自动降级东方财富）
+python3 bin/quant.py realtime sh600519,sz000858,sh601212
+python3 bin/quant.py realtime sh600519 --source tencent
+
+# 搜索股票（按名称或代码）
+python3 bin/quant.py search 茅台
+python3 bin/quant.py search 宁德时代
+```
+compare 命令已自动集成实时价格显示。
+
+### 东方财富妙想 AI (em-*)
+集成 [东方财富妙想](https://ai.eastmoney.com/mxClaw) 免费 AI 金融数据接口，提供 AI 驱动的股票诊断、选股、问答等功能。
+
+**配置**：在 `config.yaml` 中设置 `em_api_key`，或设置环境变量 `EM_API_KEY`。
+**注册**：[https://ai.eastmoney.com/mxClaw](https://ai.eastmoney.com/mxClaw)
+
+```bash
+# AI 股票诊断（自然语言）
+python3 bin/quant.py em-diagnose sh600519
+python3 bin/quant.py em-diagnose sh600519 -q "贵州茅台未来一周走势分析"
+
+# AI 自然语言选股
+python3 bin/quant.py em-pick "市盈率最低的20只股票"
+python3 bin/quant.py em-pick "连续上涨的创业板股票" --top 5
+
+# AI 金融问答
+python3 bin/quant.py em-ask "什么是量化宽松？对A股有什么影响？"
+python3 bin/quant.py em-ask "美联储加息周期对黄金价格的影响" --deep
+
+# AI 资讯搜索
+python3 bin/quant.py em-news "人工智能政策" --top 10
+python3 bin/quant.py em-news "新能源汽车" --market cn
+
+# AI 基金诊断
+python3 bin/quant.py em-fund 招商中证白酒
+python3 bin/quant.py em-fund 161725 -q "这只基金适合定投吗"
+```
+
+| 命令 | 用途 | 特点 |
+|------|------|------|
+| `em-diagnose` | 股票综合诊断 | 自动降级到 em-ask，5维度深度分析 |
+| `em-pick` | 自然语言选股 | 支持 A股/港股/美股，多种品类 |
+| `em-ask` | 金融问答 | `--deep` 启用深度思考 |
+| `em-news` | 资讯搜索 | 按市场筛选，AI 总结 |
+| `em-fund` | 基金诊断 | 自动降级到 em-ask，6维度基金分析 |
 
 ## License
 

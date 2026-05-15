@@ -6,6 +6,14 @@ A股量化分析工具箱 - 行情数据、技术指标、形态识别、策略�
 
 import sys
 import os
+
+# 修复 Windows 编码问题（参考 stock-quant 的编码处理）
+if sys.platform == 'win32':
+    os.environ['PYTHONUTF8'] = '1'
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
 import argparse
 import json
 
@@ -17,6 +25,8 @@ from lib import mytt
 from lib.patterns import PATTERN_MAP, zigzag
 from lib.strategies import STRATEGY_MAP, STRATEGY_DESC, strategy_ensemble
 from lib.backtest import backtest
+from lib.data_cache import cached_fetch
+from lib.settings import get as cfg
 
 try:
     from lib.akshare_data import get_fund_flow, get_sector_hot, get_margin_data, get_sector_list
@@ -24,13 +34,29 @@ try:
 except ImportError:
     HAS_AKSHARE_DATA = False
 
+try:
+    from lib import em_api
+    HAS_EM_API = True
+except ImportError:
+    HAS_EM_API = False
+
+try:
+    from lib.realtime_data import get_realtime, search_stock, format_realtime
+    HAS_REALTIME = True
+except ImportError:
+    HAS_REALTIME = False
+
 
 # ── 工具函数 ──────────────────────────────────────────────
 
-def _fetch(code, count, period, end=''):
-    """获取行情数据，带网络错误处理"""
+def _fetch(code, count, period, end='', use_cache=True):
+    """获取行情数据，带缓存和网络错误处理"""
     try:
-        df = get_price(code, end_date=end or '', count=count, frequency=period)
+        if use_cache:
+            df = cached_fetch(code, count, period, end,
+                              fetch_func=lambda c, n, p, e: get_price(c, end_date=e or '', count=n, frequency=p))
+        else:
+            df = get_price(code, end_date=end or '', count=count, frequency=period)
         if df is None or df.empty:
             print(f"  错误: 未获取到 {code} 的数据，请检查股票代码是否正确")
             print(f"  提示: 沪市用 sh 前缀 (如 sh600519)，深市用 sz 前缀 (如 sz000001)")
@@ -229,17 +255,26 @@ def cmd_backtest(args):
     # 长期持有策略用 lot_size=1 允许全额买入
     lot = 1 if args.strategy == 'buy_hold' else 100
 
+    # 生成信号（用于图表标注）
+    signals = STRATEGY_MAP[args.strategy](df)
+
     result = backtest(
         df,
         STRATEGY_MAP[args.strategy],
         capital=args.capital,
-        commission=0.001,
-        slippage=0.001,
-        position_size=1.0,
+        commission=cfg('commission', 0.001),
+        slippage=cfg('slippage', 0.001),
+        position_size=cfg('position_size', 1.0),
         stop_loss=args.stop_loss,
         take_profit=args.take_profit,
         lot_size=lot,
     )
+
+    # HTML 图表输出（参考 stock-quant 的 html 目录设计）
+    if hasattr(args, 'html') and args.html:
+        from lib.chart import save_backtest_chart
+        filepath = save_backtest_chart(args.code, df, result, args.strategy, signals)
+        print(f"\n  HTML 图表已保存: {filepath}")
 
     if args.json:
         output = result.to_dict()
@@ -567,6 +602,18 @@ def cmd_analyze(args):
         if ens_d['sharpe_ratio'] > best_sharpe:
             print(f"  🏆 组合最优: ensemble (夏普比率 {ens_d['sharpe_ratio']:.4f} > 单一 {best_sharpe:.4f}) ✅")
 
+    # ── HTML 图表输出 ──
+    if hasattr(args, 'html') and args.html:
+        from lib.chart import save_analyze_chart
+        # 收集所有回测结果
+        all_bt_results = {}
+        for strat_name, strat_func in STRATEGY_MAP.items():
+            lot = 1 if strat_name == 'buy_hold' else 100
+            bt = backtest(df, strat_func, capital=args.capital, commission=0.001, slippage=0.001, lot_size=lot)
+            all_bt_results[strat_name] = bt
+        filepath = save_analyze_chart(args.code, df, all_bt_results, signals_map=None)
+        print(f"\n  HTML 图表已保存: {filepath}")
+
     # ── 6. 综合判断 ──────────────────────────────────────
     print(f"\n{'─'*60}")
     print(f"  📋 综合判断")
@@ -835,6 +882,24 @@ def cmd_compare(args):
         best = valid[0]
         print(f"\n  🏆 综合最优: {best['code']} (评分 {best['score']:+.1f}, {best['ma_pos']}, {best['macd']}, 买{best['buy_count']}/卖{best['sell_count']})")
 
+    # 实时价格
+    if HAS_REALTIME:
+        try:
+            rt_results = get_realtime(codes)
+            rt_map = {r['code']: r for r in rt_results if 'code' in r}
+            print(f"\n  📡 实时行情:")
+            for r in rt_results:
+                if 'error' in r:
+                    continue
+                name = r.get('name', '')
+                pct = r.get('percent', 0)
+                now = r.get('now', 0)
+                sign = '+' if pct > 0 else ''
+                arrow = '🔴' if pct < 0 else '🟢' if pct > 0 else '⚪'
+                print(f"    {arrow} {name}({r['code']})  {now:.2f}  {sign}{pct:.2f}%")
+        except Exception:
+            pass
+
     # ensemble 回测对比
     if args.ensemble:
         print(f"\n{'─'*90}")
@@ -871,6 +936,473 @@ def cmd_compare(args):
     print(f"\n{'='*90}")
     print(f"  ⚠️  以上分析仅供参考，不构成投资建议")
     print(f"{'='*90}")
+
+
+def cmd_search(args):
+    """搜索股票代码/名称"""
+    if not HAS_REALTIME:
+        print("  ❌ realtime_data 模块未加载")
+        return
+
+    keyword = args.keyword
+
+    print(f"\n{'='*50}")
+    print(f"  🔍 搜索: {keyword}")
+    print(f"{'='*50}")
+
+    results = search_stock(keyword, source=args.source)
+    if results:
+        for r in results:
+            print(f"  {r['code']:<12s} {r['name']}")
+        print(f"\n  共找到 {len(results)} 条结果")
+    else:
+        print("  未找到匹配结果")
+
+
+def cmd_cache(args):
+    """数据缓存管理"""
+    from lib.data_cache import cache_stats, clear_cache
+
+    if args.action == 'stats':
+        stats = cache_stats()
+        print(f"\n{'='*40}")
+        print(f"  📦 数据缓存统计")
+        print(f"{'='*40}")
+        print(f"  缓存文件数: {stats['files']}")
+        print(f"  缓存大小:   {stats['size_kb']} KB")
+        print(f"  缓存目录:   {cfg('cache_dir', 'cache')}")
+        print(f"  缓存TTL:    {cfg('cache_ttl_hours', 4)} 小时")
+        print(f"{'='*40}")
+    elif args.action == 'clear':
+        count = clear_cache(older_than_hours=args.older_than)
+        print(f"  已清理 {count} 个缓存文件")
+
+
+def cmd_diagnose(args):
+    """股票综合诊断 — 借鉴 Aeolus stock-diagnosis"""
+    if not HAS_AKSHARE_DATA:
+        print("❌ akshare 未安装")
+        return
+        print("❌ akshare 未安装")
+        return
+
+    code = args.code.replace('sh', '').replace('sz', '').replace('SH', '').replace('SZ', '')
+    print(f"\n{'='*60}")
+    print(f"  🏥 股票综合诊断: {args.code}")
+    print(f"{'='*60}")
+
+    # 1. 技术面
+    df = _fetch(args.code, args.count, args.period)
+    close = df['close'].values
+    high = df['high'].values if 'high' in df.columns else close
+    low = df['low'].values if 'low' in df.columns else close
+
+    import numpy as np
+    last = close[-1]
+    change = (close[-1] - close[-2]) / close[-2] * 100 if len(close) >= 2 else 0
+
+    print(f"\n  📈 技术面评分")
+    print(f"  {'─'*50}")
+    tech_score = 0
+    tech_reasons = []
+
+    # 均线
+    for n in [5, 20, 60]:
+        ma = mytt.MA(close, n)
+        val = ma[-1] if not np.isnan(ma[-1]) else 0
+        if val > 0:
+            if last > val:
+                tech_score += 1
+                tech_reasons.append(f"  价格 > MA{n} ({val:.2f})  +1")
+            else:
+                tech_score -= 1
+                tech_reasons.append(f"  价格 < MA{n} ({val:.2f})  -1")
+
+    # MACD
+    dif, dea, macd_v = mytt.MACD(close)
+    if dif[-1] > dea[-1]:
+        tech_score += 1
+        tech_reasons.append(f"  MACD 金叉  +1")
+    else:
+        tech_score -= 1
+        tech_reasons.append(f"  MACD 死叉  -1")
+
+    # RSI
+    rsi = mytt.RSI(close, 14)[-1]
+    if rsi < 30:
+        tech_score += 1
+        tech_reasons.append(f"  RSI={rsi:.1f} 超卖  +1")
+    elif rsi > 70:
+        tech_score -= 1
+        tech_reasons.append(f"  RSI={rsi:.1f} 超买  -1")
+    else:
+        tech_reasons.append(f"  RSI={rsi:.1f} 中性   0")
+
+    # 成交量趋势
+    vol = df['volume'].values if 'volume' in df.columns else None
+    if vol is not None and len(vol) >= 10:
+        vol_recent = np.mean(vol[-3:])
+        vol_prev = np.mean(vol[-10:-3])
+        if vol_recent > vol_prev * 1.5:
+            tech_reasons.append(f"  近3日放量 (均量 {vol_recent/1e4:.0f}万)   0")
+        elif vol_recent < vol_prev * 0.7:
+            tech_reasons.append(f"  近3日缩量 (均量 {vol_recent/1e4:.0f}万)   0")
+
+    for r in tech_reasons:
+        print(r)
+    print(f"\n  技术面得分: {tech_score:+d}/8")
+
+    # 2. 资金面
+    print(f"\n  💰 资金面")
+    print(f"  {'─'*50}")
+    try:
+        from lib.akshare_data import get_fund_flow
+        flow = get_fund_flow(code)
+        rows = flow.get('rows', [])
+        summary = flow.get('summary', {})
+        if rows:
+            m1 = summary.get('main_net_1d', 0)
+            m3 = summary.get('main_net_3d', 0)
+            direction_1d = '🟢 流入' if m1 > 0 else '🔴 流出'
+            direction_3d = '🟢 流入' if m3 > 0 else '🔴 流出'
+            print(f"  主力1日: {m1/1e4:+,.0f}万 {direction_1d}")
+            print(f"  主力3日: {m3/1e4:+,.0f}万 {direction_3d}")
+            for r in rows:
+                print(f"    {r['date']}  主力 {r['main_net']/1e4:+,.0f}万  超大单 {r['super_large_net']/1e4:+,.0f}万")
+        else:
+            print(f"  无资金流向数据")
+    except Exception as e:
+        print(f"  数据获取失败: {e}")
+
+    # 3. 基本面
+    print(f"\n  📊 基本面")
+    print(f"  {'─'*50}")
+    try:
+        from lib.akshare_data import get_stock_diagnosis_data
+        diag = get_stock_diagnosis_data(code)
+        fin = diag.get('financial', {})
+        val = diag.get('valuation', {})
+        if fin:
+            rev = fin.get('营业总收入', fin.get('revenue', 0))
+            np_ = fin.get('净利润', fin.get('net_profit', 0))
+            roe_ = fin.get('净资产收益率', fin.get('roe', 0))
+            gm = fin.get('毛利率', fin.get('gross_margin', 0))
+            if rev:
+                print(f"  营业总收入: {rev/1e8:.2f}亿" if abs(rev) > 1e4 else f"  营业总收入: {rev}")
+            if np_:
+                print(f"  净利润:     {np_/1e8:.2f}亿" if abs(np_) > 1e4 else f"  净利润: {np_}")
+            if roe_:
+                print(f"  ROE:        {roe_:.2f}%")
+            if gm:
+                print(f"  毛利率:     {gm:.2f}%")
+        if val:
+            pe = val.get('市盈率(TTM)', val.get('pe_ttm', 0))
+            pb = val.get('市净率', val.get('pb', 0))
+            dv = val.get('股息率%', val.get('dv_ratio', 0))
+            if pe: print(f"  市盈率TTM:  {pe:.2f}")
+            if pb: print(f"  市净率:     {pb:.2f}")
+            if dv: print(f"  股息率:     {dv:.2f}%")
+        if not fin and not val:
+            print(f"  无基本面数据")
+    except Exception as e:
+        print(f"  数据获取失败: {e}")
+
+    # 4. 形态
+    print(f"\n  🔍 形态识别")
+    print(f"  {'─'*50}")
+    for pat_name, pat_func in PATTERN_MAP.items():
+        if pat_name == 'zigzag':
+            continue
+        r = pat_func(close)
+        if isinstance(r, list) and r:
+            print(f"  {pat_name}: {len(r)} 个 ✅")
+        else:
+            print(f"  {pat_name}: 无")
+
+    # 5. 综合评分
+    fund_score = 0
+    try:
+        m3 = summary.get('main_net_3d', 0) if 'summary' in dir() else 0
+        if m3 > 0: fund_score = 1
+        elif m3 < 0: fund_score = -1
+    except:
+        pass
+
+    total = tech_score + fund_score
+    if total >= 3: verdict = "强烈看多 🟢🟢🟢"
+    elif total >= 1: verdict = "偏多 🟢"
+    elif total <= -3: verdict = "强烈看空 🔴🔴🔴"
+    elif total <= -1: verdict = "偏空 🔴"
+    else: verdict = "中性 ⚪"
+
+    print(f"\n{'─'*60}")
+    print(f"  🏆 综合诊断: {verdict} (技术{tech_score:+d} + 资金{fund_score:+d} = 总分{total:+d})")
+    print(f"{'─'*60}")
+    print(f"\n  ⚠️ 以上分析仅供参考，不构成投资建议")
+
+
+def cmd_macro(args):
+    """宏观经济数据查询 — 借鉴 Aeolus MX_MacroData"""
+    from lib.akshare_data import get_macro_data
+
+    result = get_macro_data(args.indicator)
+
+    if 'error' in result:
+        print(f"  ❌ {result['error']}")
+        return
+
+    indicator_names = {
+        'cpi': '居民消费价格指数 (CPI)',
+        'ppi': '工业生产者出厂价格指数 (PPI)',
+        'gdp': '国内生产总值 (GDP)',
+        'pmi': '制造业采购经理指数 (PMI)',
+        'm2': 'M2 货币供应量',
+        'lpr': '贷款市场报价利率 (LPR)',
+        'unemployment': '城镇调查失业率',
+        'trade': '进出口贸易数据',
+        'industrial': '工业增加值',
+    }
+
+    name = indicator_names.get(args.indicator, args.indicator)
+    data = result.get('data', [])
+    columns = result.get('columns', [])
+
+    print(f"\n{'='*70}")
+    print(f"  📊 宏观数据: {name}")
+    print(f"{'='*70}")
+
+    if not data:
+        print(f"  无数据")
+        return
+
+    # 取关键列显示
+    key_cols = [c for c in columns if any(k in c for k in ['日期', '时间', '月份', '季度', '年份', '公布日期', '今值', '前值', '数值', '同比', '环比', 'GDP', 'CPI', 'PPI', 'PMI', 'M2', '失业率'])]
+
+    if not key_cols:
+        key_cols = columns[:6]  # 取前6列
+
+    # 打印表头
+    header = f"  "
+    for c in key_cols:
+        header += f"{str(c):>14s}"
+    print(header)
+    print(f"  {'─' * (14 * len(key_cols))}")
+
+    for row in data[:12]:
+        line = f"  "
+        for c in key_cols:
+            val = row.get(c, '')
+            if val is None:
+                val = '-'
+            elif isinstance(val, float):
+                val = f"{val:.2f}"
+            else:
+                val = str(val)[:12]
+            line += f"{str(val):>14s}"
+        print(line)
+
+    print(f"\n  共 {len(data)} 条数据")
+
+
+def cmd_hotspot(args):
+    """市场热点发现 — 借鉴 Aeolus stock-market-hotspot-discovery"""
+    from lib.akshare_data import get_market_hotspot
+
+    print(f"\n{'='*70}")
+    print(f"  🔥 市场热点扫描")
+    print(f"{'='*70}")
+
+    result = get_market_hotspot(top_n=args.top)
+
+    # 1. 人气榜
+    hot_ranks = result.get('hot_ranks', [])
+    if hot_ranks:
+        print(f"\n  📢 A股人气榜 Top {min(10, len(hot_ranks))}")
+        print(f"  {'排名':>4s} {'代码':>8s} {'名称':<10s} {'现价':>8s} {'涨跌%':>7s} {'人气':>8s}")
+        print(f"  {'─'*55}")
+        for r in hot_ranks[:10]:
+            cls = '↑' if r['chg_pct'] > 0 else '↓' if r['chg_pct'] < 0 else '-'
+            print(f"  {int(r.get('rank', 0)):>4d} {r['code']:>8s} {r['name']:<10s} {r['price']:>8.2f} {r['chg_pct']:>+6.2f}% {cls} {r.get('heat', 0):>8.0f}")
+    else:
+        print(f"\n  📢 人气榜: 数据暂不可用 (东方财富接口连接失败)")
+
+    # 2. 概念板块
+    concepts = result.get('concept_hot', [])
+    if concepts:
+        print(f"\n  🏷️  概念板块涨幅榜 Top {min(10, len(concepts))}")
+        print(f"  {'板块名称':<16s} {'涨跌%':>7s} {'领涨股':<10s}")
+        print(f"  {'─'*40}")
+        for r in concepts[:10]:
+            print(f"  {r['name']:<16s} {r['chg_pct']:>+6.2f}% {r.get('leader', ''):<10s}")
+    else:
+        print(f"\n  🏷️  概念板块: 数据暂不可用")
+
+    # 3. 行业板块（已有接口，用 get_sector_hot）
+    try:
+        from lib.akshare_data import get_sector_hot
+        hot_data = get_sector_hot(top_n=10)
+        hot_list = hot_data.get('hot', [])
+        if hot_list:
+            print(f"\n  🏭 行业板块涨幅榜 Top {len(hot_list)}")
+            print(f"  {'板块名称':<16s} {'涨跌%':>7s} {'领涨股':<10s}")
+            print(f"  {'─'*40}")
+            for r in hot_list:
+                print(f"  {r['name']:<16s} {r['chg_pct']:>+6.2f}% {r.get('leader', ''):<10s}")
+    except Exception:
+        print(f"\n  🏭 行业板块: 数据暂不可用")
+
+    print(f"\n{'='*70}")
+    print(f"  ⚠️ 数据仅供参考，不构成投资建议")
+
+
+def cmd_realtime(args):
+    """实时行情 — 腾讯/东方财富多数据源"""
+    if not HAS_REALTIME:
+        print("  ❌ realtime_data 模块未加载")
+        return
+
+    codes = [c.strip() for c in args.codes.split(',') if c.strip()]
+
+    results = get_realtime(codes, source=args.source)
+
+    print(f"\n{'='*60}")
+    print(f"  📡 实时行情  数据源: {args.source}")
+    print(f"{'='*60}")
+    print(format_realtime(results))
+    print(f"\n{'='*60}")
+
+
+def _check_em_api():
+    """检查东方财富妙想 API 是否配置"""
+    if not HAS_EM_API:
+        print("  ❌ em_api 模块未加载")
+        return False
+    if not em_api.is_configured():
+        print("  ❌ 未配置东方财富妙想 API Key")
+        print("  💡 请在 config.yaml 中设置 em_api_key 或设置环境变量 EM_API_KEY")
+        print("  💡 注册地址: https://ai.eastmoney.com/mxClaw")
+        return False
+    return True
+
+
+def cmd_em_diagnose(args):
+    """东方财富妙想 AI 股票诊断"""
+    if not _check_em_api():
+        return
+
+    question = args.question or f"分析{args.code}"
+    # 转换代码格式: sh600519 → 贵州茅台
+    code = args.code
+
+    print(f"\n{'='*60}")
+    print(f"  🤖 东方财富妙想 AI 诊断")
+    print(f"{'='*60}")
+    print(f"  查询: {question}")
+    print(f"  {'─'*56}")
+
+    result = em_api.stock_diagnosis(question)
+
+    if result.get('error'):
+        print(f"  ❌ {result['error']}")
+    elif result.get('content'):
+        print(f"\n{result['content']}")
+    else:
+        print("  未返回有效内容")
+
+
+def cmd_em_pick(args):
+    """东方财富妙想 AI 选股"""
+    if not _check_em_api():
+        return
+
+    query = args.query
+    market = args.market
+    category = args.category
+
+    print(f"\n{'='*60}")
+    print(f"  🤖 东方财富妙想 AI 选股")
+    print(f"{'='*60}")
+    print(f"  条件: {query}")
+    print(f"  市场: {market}  品类: {category}")
+    print(f"  {'─'*56}")
+
+    result = em_api.select_security(query, market=market, category=category, top_n=args.top)
+
+    if result.get('error'):
+        print(f"  ❌ {result['error']}")
+    elif result.get('content'):
+        print(f"\n{result['content']}")
+    else:
+        print("  未返回有效内容")
+
+
+def cmd_em_ask(args):
+    """东方财富妙想 AI 金融问答"""
+    if not _check_em_api():
+        return
+
+    question = args.question
+
+    print(f"\n{'='*60}")
+    print(f"  🤖 东方财富妙想 AI 问答")
+    print(f"{'='*60}")
+    print(f"  问题: {question}")
+    print(f"  {'─'*56}")
+
+    result = em_api.ask(question, deep_think=args.deep)
+
+    if result.get('error'):
+        print(f"  ❌ {result['error']}")
+    elif result.get('content'):
+        print(f"\n{result['content']}")
+    else:
+        print("  未返回有效内容")
+
+
+def cmd_em_news(args):
+    """东方财富妙想 AI 资讯搜索"""
+    if not _check_em_api():
+        return
+
+    query = args.query
+
+    print(f"\n{'='*60}")
+    print(f"  🤖 东方财富妙想 AI 资讯")
+    print(f"{'='*60}")
+    print(f"  搜索: {query}")
+    print(f"  {'─'*56}")
+
+    result = em_api.search_news(query, market=args.market, count=args.top)
+
+    if result.get('error'):
+        print(f"  ❌ {result['error']}")
+    elif result.get('content'):
+        print(f"\n{result['content']}")
+    else:
+        print("  未返回有效内容")
+
+
+def cmd_em_fund(args):
+    """东方财富妙想 AI 基金诊断"""
+    if not _check_em_api():
+        return
+
+    question = args.question or f"分析{args.code}"
+
+    print(f"\n{'='*60}")
+    print(f"  🤖 东方财富妙想 AI 基金诊断")
+    print(f"{'='*60}")
+    print(f"  查询: {question}")
+    print(f"  {'─'*56}")
+
+    result = em_api.fund_diagnosis(question)
+
+    if result.get('error'):
+        print(f"  ❌ {result['error']}")
+    elif result.get('content'):
+        print(f"\n{result['content']}")
+    else:
+        print("  未返回有效内容")
 
 
 def cmd_list(args):
@@ -971,6 +1503,7 @@ def main():
     p_bt.add_argument('--stop-loss', type=float, default=None, help='止损比例 (如 0.05)')
     p_bt.add_argument('--take-profit', type=float, default=None, help='止盈比例 (如 0.10)')
     p_bt.add_argument('--json', '-j', action='store_true', help='JSON格式输出')
+    p_bt.add_argument('--html', action='store_true', help='输出HTML图表文件 (参考 stock-quant)')
 
     # scan
     p_scan = subparsers.add_parser('scan', help='市场扫描')
@@ -987,6 +1520,7 @@ def main():
     p_analyze.add_argument('--capital', '-c', type=float, default=100000, help='初始资金')
     p_analyze.add_argument('--stop-loss', type=float, default=None, help='止损比例 (如 0.05)')
     p_analyze.add_argument('--take-profit', type=float, default=None, help='止盈比例 (如 0.10)')
+    p_analyze.add_argument('--html', action='store_true', help='输出HTML图表文件 (参考 stock-quant)')
 
     # compare
     p_compare = subparsers.add_parser('compare', help='多股票对比分析')
@@ -1001,6 +1535,65 @@ def main():
     p_fund.add_argument('code', help='股票代码，如 sh600519 或 sz000001')
 
     subparsers.add_parser('list', help='列出可用指标/策略/形态')
+
+    # cache
+    p_cache = subparsers.add_parser('cache', help='数据缓存管理')
+    p_cache.add_argument('action', choices=['stats', 'clear'], help='stats=查看统计, clear=清理缓存')
+    p_cache.add_argument('--older-than', type=int, default=None, help='只清理超过N小时的缓存')
+
+    # diagnose
+    p_diag = subparsers.add_parser('diagnose', help='股票综合诊断 (技术+资金+基本面+形态)')
+    p_diag.add_argument('code', help='股票代码')
+    p_diag.add_argument('--period', '-p', default='1d', choices=['1d', '1w', '1M'], help='K线周期')
+    p_diag.add_argument('--count', '-n', type=int, default=250, help='数据条数')
+
+    # macro
+    p_macro = subparsers.add_parser('macro', help='宏观经济数据查询')
+    p_macro.add_argument('indicator', nargs='?', default='cpi',
+                         choices=['cpi', 'ppi', 'gdp', 'pmi', 'm2', 'lpr', 'unemployment', 'trade', 'industrial'],
+                         help='指标类型 (默认cpi)')
+
+    # hotspot
+    p_hot = subparsers.add_parser('hotspot', help='市场热点扫描 (人气榜+概念+行业)')
+    p_hot.add_argument('--top', '-n', type=int, default=20, help='返回前N名 (默认20)')
+
+    # realtime
+    p_rt = subparsers.add_parser('realtime', help='实时行情 (腾讯/东方财富)')
+    p_rt.add_argument('codes', help='股票代码，逗号分隔 (如 sh600519,sz000858)')
+    p_rt.add_argument('--source', '-s', default='auto', choices=['auto', 'tencent', 'eastmoney'], help='数据源')
+
+    # search
+    p_search = subparsers.add_parser('search', help='搜索股票代码/名称')
+    p_search.add_argument('keyword', help='搜索关键词')
+    p_search.add_argument('--source', '-s', default='auto', choices=['auto', 'tencent', 'eastmoney'], help='数据源')
+
+    # em-diagnose (东方财富妙想 AI 诊断)
+    p_emd = subparsers.add_parser('em-diagnose', help='东方财富妙想 AI 股票诊断')
+    p_emd.add_argument('code', help='股票代码 (如 sh600519) 或基金代码')
+    p_emd.add_argument('--question', '-q', default='', help='自定义问题 (默认: 分析XX)')
+
+    # em-pick (东方财富妙想 AI 选股)
+    p_emp = subparsers.add_parser('em-pick', help='东方财富妙想 AI 自然语言选股')
+    p_emp.add_argument('query', help='选股条件 (如 "市盈率最低的20只股票")')
+    p_emp.add_argument('--market', '-m', default='a_share', choices=['a_share', 'hk', 'us'], help='市场')
+    p_emp.add_argument('--category', '-c', default='stock', choices=['stock', 'fund', 'etf', 'bond', 'convertible_bond', 'sector', 'concept'], help='品类')
+    p_emp.add_argument('--top', '-n', type=int, default=10, help='返回数量')
+
+    # em-ask (东方财富妙想 AI 问答)
+    p_ema = subparsers.add_parser('em-ask', help='东方财富妙想 AI 金融问答')
+    p_ema.add_argument('question', help='金融问题')
+    p_ema.add_argument('--deep', '-d', action='store_true', help='启用深度思考')
+
+    # em-news (东方财富妙想 AI 资讯)
+    p_emn = subparsers.add_parser('em-news', help='东方财富妙想 AI 资讯搜索')
+    p_emn.add_argument('query', help='搜索关键词')
+    p_emn.add_argument('--market', '-m', default='', choices=['', 'cn', 'hk', 'us'], help='市场筛选')
+    p_emn.add_argument('--top', '-n', type=int, default=10, help='返回数量')
+
+    # em-fund (东方财富妙想 AI 基金诊断)
+    p_emf = subparsers.add_parser('em-fund', help='东方财富妙想 AI 基金诊断')
+    p_emf.add_argument('code', help='基金代码或名称')
+    p_emf.add_argument('--question', '-q', default='', help='自定义问题')
 
     args = parser.parse_args()
 
@@ -1018,6 +1611,17 @@ def main():
         'compare': cmd_compare,
         'fund': cmd_fund,
         'list': cmd_list,
+        'cache': cmd_cache,
+        'diagnose': cmd_diagnose,
+        'macro': cmd_macro,
+        'hotspot': cmd_hotspot,
+        'realtime': cmd_realtime,
+        'search': cmd_search,
+        'em-diagnose': cmd_em_diagnose,
+        'em-pick': cmd_em_pick,
+        'em-ask': cmd_em_ask,
+        'em-news': cmd_em_news,
+        'em-fund': cmd_em_fund,
     }
 
     try:

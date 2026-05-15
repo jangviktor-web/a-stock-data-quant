@@ -1,0 +1,30 @@
+# quant-china 配置文件
+# 命令行参数优先，这里设置缺省值
+
+# 回测参数
+capital: 100000          # 初始资金
+commission: 0.001        # 手续费率 (0.1%)
+slippage: 0.001          # 滑点率
+position_size: 1.0       # 仓位比例
+
+# 数据参数
+default_count: 120
+analyze_count: 500
+backtest_count: 500
+default_period: "1d"
+
+# 输出
+html_output_dir: "html"   # HTML图表输出目录
+
+# 数据缓存
+cache_enabled: true       # 是否启用缓存
+cache_dir: "cache"        # 缓存目录
+cache_ttl_hours: 4        # 缓存过期时间(小时)
+
+# 东方财富妙想 AI API (免费)
+# 注册获取: https://ai.eastmoney.com/mxClaw
+# 或设置环境变量 EM_API_KEY
+em_api_key: "em_IjcEMTprwBcjOdyC7dqv1ZNJ1HlV3mIH"
+
+# 企业微信通知 (可选)
+# wechat_webhook: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY"

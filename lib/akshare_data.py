@@ -228,3 +228,130 @@ def get_margin_data(days=30):
             'short_balance': r.get('融券余量金额', 0),
         })
     return rows
+
+
+# ── 股票综合诊断数据 ────────────────────────────────────────
+
+def get_stock_diagnosis_data(code):
+    """
+    获取股票诊断所需的基本面+估值数据
+    """
+    _require_akshare()
+    result = {'code': code}
+
+    try:
+        df = ak.stock_financial_abstract(symbol=code)
+        if df is not None and not df.empty:
+            latest = df.iloc[0]
+            result['financial'] = {str(k): v for k, v in latest.items()}
+    except Exception:
+        result['financial'] = {}
+
+    try:
+        df = ak.stock_financial_analysis_indicator(symbol=code)
+        if df is not None and not df.empty:
+            latest = df.iloc[0]
+            result['valuation'] = {str(k): v for k, v in latest.items()}
+    except Exception:
+        result['valuation'] = {}
+
+    return result
+
+
+# ── 宏观经济数据 ──────────────────────────────────────────
+
+def get_macro_data(indicator='cpi'):
+    """
+    获取中国宏观经济数据
+    indicator: cpi/ppi/gdp/pmi/m2/lpr/unemployment/trade/industrial
+    """
+    _require_akshare()
+
+    func_map = {
+        'cpi': ak.macro_china_cpi,
+        'ppi': ak.macro_china_ppi,
+        'gdp': ak.macro_china_gdp,
+        'pmi': ak.macro_china_pmi,
+        'm2': ak.macro_china_money_supply,
+        'lpr': ak.macro_china_lpr,
+        'unemployment': ak.macro_china_urban_unemployment,
+        'trade': ak.macro_china_trade_balance,
+        'industrial': ak.macro_china_gyzjz,
+    }
+
+    if indicator not in func_map:
+        return {'indicator': indicator, 'data': [], 'error': f'未知指标，可选: {", ".join(func_map.keys())}'}
+
+    try:
+        df = _safe_call(func_map[indicator])
+    except Exception as e:
+        return {'indicator': indicator, 'data': [], 'error': str(e)}
+
+    if df is None or df.empty:
+        return {'indicator': indicator, 'data': []}
+
+    df = df.head(12)
+    rows = []
+    for _, r in df.iterrows():
+        row = {}
+        for col in df.columns:
+            val = r[col]
+            try:
+                import math
+                if isinstance(val, float) and math.isnan(val):
+                    val = None
+            except (TypeError, ValueError):
+                pass
+            row[str(col)] = val
+        rows.append(row)
+
+    return {'indicator': indicator, 'data': rows, 'columns': list(df.columns)}
+
+
+# ── 市场热点 ──────────────────────────────────────────────
+
+def get_market_hotspot(top_n=20):
+    """获取市场热点：人气榜 + 概念板块 + 行业板块"""
+    _require_akshare()
+    result = {'hot_ranks': [], 'concept_hot': [], 'industry_hot': []}
+
+    try:
+        df = ak.stock_hot_rank_em()
+        if df is not None and not df.empty:
+            for _, r in df.head(top_n).iterrows():
+                result['hot_ranks'].append({
+                    'code': str(r.get('股票代码', '')),
+                    'name': str(r.get('股票名称', '')),
+                    'price': r.get('最新价', 0),
+                    'chg_pct': r.get('涨跌幅', 0),
+                    'rank': r.get('当前排名', 0),
+                    'heat': r.get('人气值', 0),
+                })
+    except Exception:
+        pass
+
+    try:
+        df = ak.stock_board_concept_name_em()
+        if df is not None and not df.empty:
+            for _, r in df.sort_values('涨跌幅', ascending=False).head(top_n).iterrows():
+                result['concept_hot'].append({
+                    'name': str(r.get('板块名称', '')),
+                    'chg_pct': r.get('涨跌幅', 0),
+                    'leader': str(r.get('领涨股票', '')),
+                })
+    except Exception:
+        pass
+
+    try:
+        df = ak.stock_board_industry_name_em()
+        if df is not None and not df.empty:
+            for _, r in df.sort_values('涨跌幅', ascending=False).head(top_n).iterrows():
+                result['industry_hot'].append({
+                    'name': str(r.get('板块名称', '')),
+                    'chg_pct': r.get('涨跌幅', 0),
+                    'leader': str(r.get('领涨股票', '')),
+                })
+    except Exception:
+        pass
+
+    return result
