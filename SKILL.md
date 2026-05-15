@@ -198,11 +198,25 @@ python3 bin/quant.py realtime sh600519,sz000858,sh601212
 python3 bin/quant.py realtime sh600519 --source tencent
 ```
 
+```
+📡 实时行情  数据源: auto
+  🔴 贵州茅台(SH600519)  1332.95  -0.69%  高:1339.28 低:1327.11 昨:1342.17
+  🔴 五 粮 液(SZ000858)  86.87  -2.38%  高:88.08 低:86.62 昨:88.99
+```
+
+涨🟢/跌🔴标识，含最高价/最低价/昨收。
+
 ### search — 股票搜索
 
 ```bash
 python3 bin/quant.py search 白银
 python3 bin/quant.py search 宁德时代
+```
+
+```
+🔍 搜索: 白银
+  SZBK1616     白银
+  共找到 1 条结果
 ```
 
 ### diagnose — 综合诊断
@@ -211,6 +225,13 @@ python3 bin/quant.py search 宁德时代
 
 ```bash
 python3 bin/quant.py diagnose sh600519
+```
+
+```
+🏥 股票综合诊断: sh600519
+  技术面得分: -3/8
+  形态: w-bottom(2) v-reversal(1) cup-handle(1)
+  综合诊断: 强烈看空 🔴🔴🔴 (技术-3 + 资金+0 = -3)
 ```
 
 ### macro — 宏观数据
@@ -224,12 +245,20 @@ python3 bin/quant.py macro lpr       # LPR利率
 python3 bin/quant.py macro trade     # 进出口
 ```
 
+```
+📊 宏观数据: 居民消费价格指数 (CPI)
+  2026年04月份  全国-同比增长: 1.20  全国-环比增长: 0.30
+  2026年03月份  全国-同比增长: 1.00  全国-环比增长: -0.70
+```
+
 ### hotspot — 市场热点
 
 ```bash
 python3 bin/quant.py hotspot
 python3 bin/quant.py hotspot --top 30
 ```
+
+⚠️ hotspot 依赖东方财富网络接口，部分网络环境下可能不可用。
 
 ### 东方财富妙想 AI (em-*)
 
@@ -241,6 +270,24 @@ python3 bin/quant.py em-pick "白酒板块龙头"                 # AI自然语�
 python3 bin/quant.py em-ask "茅台Q1业绩怎么样"              # AI问答
 python3 bin/quant.py em-news 白酒                           # AI资讯
 python3 bin/quant.py em-fund sh600519                      # AI基金分析
+```
+
+```
+🤖 东方财富妙想 AI 诊断
+  查询: 分析sh600519
+
+  一、基本面：2026Q1营收539亿(+6.54%)，净利润272亿(+1.47%)
+  二、技术面：股价1332.95，下行通道，PE历史百分位17.36%
+  三、资金面：主力净流出6.52亿，连续10日DDX为负
+  总结：基本面稳健，估值历史低位，短期技术面偏弱
+```
+
+```
+🤖 东方财富妙想 AI 选股
+  条件: 白酒板块龙头  符合条件: 57 只
+  |600519|贵州茅台|1332.95|-0.69%|1.67万亿|
+  |000858|五 粮 液|86.87|-2.38%|3371.95亿|
+  ...
 ```
 
 ### cache — 缓存管理
