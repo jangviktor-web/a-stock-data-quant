@@ -29,7 +29,13 @@ from lib.data_cache import cached_fetch
 from lib.settings import get as cfg
 
 try:
-    from lib.akshare_data import get_fund_flow, get_sector_hot, get_margin_data, get_sector_list
+    from lib.akshare_data import (
+        get_fund_flow, get_sector_hot, get_margin_data, get_sector_list,
+        get_zt_pool, get_dt_pool, get_lhb_data, get_sector_fund_rank,
+        get_locked_shares, get_holder_num, get_top10_holders,
+        get_institutional_holdings, get_industry_pe, get_market_pe_percentile,
+        get_block_trade, get_margin_detail,
+    )
     HAS_AKSHARE_DATA = True
 except ImportError:
     HAS_AKSHARE_DATA = False
@@ -1405,6 +1411,270 @@ def cmd_em_fund(args):
         print("  未返回有效内容")
 
 
+def cmd_market(args):
+    """市场情绪面 — 涨停池/跌停池/龙虎榜/板块资金流/融资融券/北向资金"""
+    if not HAS_AKSHARE_DATA:
+        print("  ❌ akshare 未安装")
+        return
+
+    print(f"\n{'='*70}")
+    print(f"  🌊 市场情绪面分析")
+    print(f"{'='*70}")
+
+    # 1. 涨停池 (获取全部用于情绪判断，只显示 top N)
+    print(f"\n  🔴 涨停池 (Top {args.limit})")
+    print(f"  {'─'*65}")
+    zt_all = get_zt_pool(limit=500)
+    zt = zt_all[:args.limit] if zt_all else []
+    if zt:
+        print(f"  {'代码':<8s} {'名称':<8s} {'价格':>8s} {'涨跌%':>7s} {'连板':>4s} {'封板资金':>10s} {'行业':<10s}")
+        print(f"  {'-'*65}")
+        for r in zt:
+            seal_amt = r.get('seal_amount', 0) or 0
+            seal_str = f"{seal_amt/1e8:.1f}亿" if seal_amt > 1e8 else f"{seal_amt/1e4:.0f}万" if seal_amt > 0 else '-'
+            streak = r.get('streak', 0) or 0
+            print(f"  {r['code']:<8s} {r['name']:<8s} {r['price']:>8.2f} {r['chg_pct']:>+6.2f}% {streak:>4d} {seal_str:>10s} {r['industry']:<10s}")
+        print(f"\n  共 {len(zt_all)} 只涨停")
+    else:
+        print(f"  无数据")
+
+    # 2. 跌停池 (获取全部用于情绪判断)
+    print(f"\n  🟢 跌停池 (Top {args.limit})")
+    print(f"  {'─'*65}")
+    dt_all = get_dt_pool(limit=500)
+    dt = dt_all[:args.limit] if dt_all else []
+    if dt:
+        print(f"  {'代码':<8s} {'名称':<8s} {'价格':>8s} {'涨跌%':>7s} {'连续跌停':>6s} {'行业':<10s}")
+        print(f"  {'-'*55}")
+        for r in dt:
+            cons = r.get('consecutive', 0) or 0
+            print(f"  {r['code']:<8s} {r['name']:<8s} {r['price']:>8.2f} {r['chg_pct']:>+6.2f}% {cons:>6d} {r['industry']:<10s}")
+        print(f"\n  共 {len(dt_all)} 只跌停")
+    else:
+        print(f"  无数据")
+
+    # 情绪判断
+    zt_count = len(zt_all)
+    dt_count = len(dt_all)
+    if zt_count < 30 and dt_count > 50:
+        sentiment = "❄️ 冰点期 — 最好的埋伏时机"
+    elif zt_count > 100 and dt_count < 10:
+        sentiment = "🔥 高潮期 — 最危险，准备撤退"
+    elif zt_count > 60:
+        sentiment = "🌡️ 偏热 — 谨慎追高"
+    else:
+        sentiment = "🌊 正常"
+    print(f"\n  情绪判断: 涨停{zt_count}只 / 跌停{dt_count}只 → {sentiment}")
+
+    # 3. 龙虎榜
+    print(f"\n  🐉 龙虎榜 (近{args.days}日统计)")
+    print(f"  {'─'*65}")
+    lhb = get_lhb_data(days=args.days, limit=args.limit)
+    if lhb:
+        print(f"  {'代码':<8s} {'名称':<8s} {'上榜':>4s} {'净买额':>12s} {'买入席':>5s} {'卖出席':>5s}")
+        print(f"  {'-'*55}")
+        for r in lhb[:args.limit]:
+            nb = r.get('net_buy', 0) or 0  # 单位: 万元
+            if abs(nb) >= 10000:
+                nb_str = f"{nb/10000:+,.1f}亿"
+            elif abs(nb) > 0:
+                nb_str = f"{nb:+,.0f}万"
+            else:
+                nb_str = '-'
+            count = r.get('count', 0) or 0
+            buy_seats = r.get('buy_seats', 0) or 0
+            sell_seats = r.get('sell_seats', 0) or 0
+            print(f"  {r['code']:<8s} {r['name']:<8s} {count:>4d} {nb_str:>12s} {buy_seats:>5.0f} {sell_seats:>5.0f}")
+    else:
+        print(f"  无数据")
+
+    # 4. 板块资金流
+    print(f"\n  💰 板块资金流排名 (行业·{args.period})")
+    print(f"  {'─'*65}")
+    sfr = get_sector_fund_rank(days=args.period, category='行业资金流', limit=args.limit)
+    if sfr:
+        print(f"  {'板块':<12s} {'涨跌%':>7s} {'主力净流入':>12s} {'主力占比':>8s}")
+        print(f"  {'-'*45}")
+        for r in sfr[:args.limit]:
+            main_str = f"{r['main_net']/1e8:+.2f}亿" if abs(r['main_net']) > 1e8 else f"{r['main_net']/1e4:+.0f}万"
+            print(f"  {r['name']:<12s} {r['chg_pct']:>+6.2f}% {main_str:>12s} {r['main_pct']:>+7.2f}%")
+    else:
+        print(f"  无数据")
+
+    # 5. 北向资金
+    print(f"\n  🌏 北向资金 (近5日)")
+    print(f"  {'─'*65}")
+    try:
+        from lib.akshare_data import get_north_flow
+        north = get_north_flow(symbol='沪股通', days=5)
+        if north and not any('error' in r for r in north):
+            print(f"  {'日期':<12s} {'净买入(亿)':>12s} {'领涨股':<10s}")
+            print(f"  {'-'*40}")
+            for r in north:
+                print(f"  {r['date']:<12s} {r['net_buy']/1e8:>+11.2f} {r['leader']:<10s}")
+        else:
+            print(f"  无数据")
+    except Exception as e:
+        print(f"  获取失败: {e}")
+
+    # 6. 融资融券
+    print(f"\n  📋 融资融券 (上交所近5日)")
+    print(f"  {'─'*65}")
+    margin = get_margin_data(days=10)
+    if margin:
+        for r in margin[-5:]:
+            print(f"  {r['date']}  融资余额: {r['margin_balance']/1e8:,.0f}亿  融资买入: {r['margin_buy']/1e8:,.0f}亿")
+    else:
+        print(f"  无数据")
+
+    print(f"\n{'='*70}")
+    print(f"  ⚠️ 以上数据仅供参考，不构成投资建议")
+    print(f"{'='*70}")
+
+
+def cmd_info(args):
+    """个股深度信息 — 限售解禁/股东人数/十大股东/基金重仓/大宗交易/估值"""
+    if not HAS_AKSHARE_DATA:
+        print("  ❌ akshare 未安装")
+        return
+
+    code = args.code.replace('sh', '').replace('sz', '').replace('SH', '').replace('SZ', '')
+
+    print(f"\n{'='*70}")
+    print(f"  📋 个股深度信息: {code}")
+    print(f"{'='*70}")
+
+    # 1. 限售解禁
+    print(f"\n  📅 近期限售解禁")
+    print(f"  {'─'*60}")
+    try:
+        locked = get_locked_shares(code=code, limit=10)
+        if locked:
+            for r in locked:
+                val_str = f"{r['release_value']:.2f}亿" if r.get('release_value', 0) and float(r['release_value']) > 0 else '-'
+                print(f"  {r['date']}  {r['name']}  解禁数量: {r.get('release_amount', 0)}  流通市值: {val_str}")
+        else:
+            print(f"  近期无 {code} 限售解禁数据")
+    except Exception as e:
+        print(f"  获取失败: {e}")
+
+    # 2. 股东人数变化
+    print(f"\n  👥 股东人数变化")
+    print(f"  {'─'*60}")
+    try:
+        holders = get_holder_num(code)
+        if holders:
+            print(f"  {'日期':<12s} {'股东户数':>10s} {'增减':>10s} {'增减比例':>8s} {'户均持股市值':>12s}")
+            print(f"  {'-'*58}")
+            for r in holders[-8:]:
+                chg = r.get('change', 0)
+                chg_pct = r.get('change_pct', 0)
+                avg_mv = r.get('avg_amount', 0)
+                avg_str = f"{avg_mv/1e4:.1f}万" if avg_mv > 1e4 else f"{avg_mv:.0f}"
+                arrow = '↑' if chg > 0 else '↓' if chg < 0 else '-'
+                print(f"  {r['date']:<12s} {r['holder_count']:>10,.0f} {arrow}{abs(chg):>8,.0f} {chg_pct:>+7.2f}% {avg_str:>12s}")
+
+            # 判断趋势
+            if len(holders) >= 2:
+                last_h = holders[-1].get('holder_count', 0)
+                prev_h = holders[-2].get('holder_count', 0)
+                if last_h > prev_h * 1.05:
+                    print(f"\n  → 股东人数增加，散户化趋势 🟡")
+                elif last_h < prev_h * 0.95:
+                    print(f"\n  → 股东人数减少，筹码集中 🟢")
+                else:
+                    print(f"\n  → 股东人数稳定")
+        else:
+            print(f"  无数据")
+    except Exception as e:
+        print(f"  获取失败: {e}")
+
+    # 3. 十大股东
+    print(f"\n  🏛️ 十大流通股东")
+    print(f"  {'─'*60}")
+    try:
+        t10 = get_top10_holders(code, holder_type='circulate')
+        holdings = t10.get('holdings', [])
+        if holdings:
+            print(f"  {'排名':>4s} {'股东名称':<28s} {'持股数':>14s} {'占比':>8s} {'增减':>6s}")
+            print(f"  {'-'*60}")
+            for h in holdings[:10]:
+                ratio = h.get('ratio', 0) or 0
+                shares = h.get('shares', 0) or 0
+                shares_str = f"{shares/1e4:,.0f}万股" if shares > 1e4 else f"{shares:,.0f}股"
+                change = h.get('change', '')
+                # 格式化增减 (可能是字符串数字或"不变")
+                try:
+                    change_num = float(change)
+                    if change_num == 0:
+                        change_str = '不变'
+                    elif abs(change_num) >= 1e4:
+                        change_str = f"{change_num/1e4:+,.0f}万"
+                    else:
+                        change_str = f"{change_num:+,.0f}"
+                except (ValueError, TypeError):
+                    change_str = str(change)[:6] if change and change != 'nan' else '-'
+                print(f"  {h['rank']:>4}. {h['holder']:<28s} {shares_str:>14s} {ratio:>7.2f}% {change_str:>8s}")
+        else:
+            print(f"  无数据")
+    except Exception as e:
+        print(f"  获取失败: {e}")
+
+    # 4. 行业估值对比
+    print(f"\n  📊 行业估值 (PE·证监会行业分类)")
+    print(f"  {'─'*60}")
+    try:
+        ind_pe = get_industry_pe(limit=15)
+        if ind_pe:
+            print(f"  {'行业':<14s} {'公司数':>6s} {'加权PE':>8s} {'中位PE':>8s} {'总市值':>10s}")
+            print(f"  {'-'*50}")
+            for r in ind_pe[:15]:
+                mkt = r.get('market_cap', 0) or 0
+                mkt_str = f"{mkt:.0f}亿" if mkt > 0 else '-'
+                pe_w = r.get('pe_weighted', 0) or 0
+                pe_m = r.get('pe_median', 0) or 0
+                cc = r.get('company_count', 0) or 0
+                print(f"  {r['industry']:<14s} {cc:>6.0f} {pe_w:>8.2f} {pe_m:>8.2f} {mkt_str:>10s}")
+        else:
+            print(f"  无数据")
+    except Exception as e:
+        print(f"  获取失败: {e}")
+
+    # 5. 大宗交易
+    print(f"\n  🏷️ 大宗交易 (近10日)")
+    print(f"  {'─'*60}")
+    try:
+        block = get_block_trade(code=code, limit=5)
+        if block:
+            print(f"  {'日期':<12s} {'代码':<8s} {'名称':<8s} {'成交价':>8s} {'折溢率':>8s} {'笔数':>4s}")
+            print(f"  {'-'*55}")
+            for r in block:
+                dp = r.get('discount', 0) or 0
+                dp_str = f"{dp:+.2f}%" if isinstance(dp, (int, float)) and dp != 0 else '-'
+                print(f"  {str(r['date']):<12s} {r['code']:<8s} {r['name']:<8s} {r.get('deal_price', 0):>8.2f} {dp_str:>8s} {r.get('count', 0):>4.0f}")
+        else:
+            # 显示全市场大宗交易
+            block_all = get_block_trade(limit=5)
+            if block_all:
+                print(f"  近期无 {code} 大宗交易，显示全市场 Top 5:")
+                print(f"  {'日期':<12s} {'代码':<8s} {'名称':<8s} {'成交价':>8s} {'折溢率':>8s} {'总额':>10s}")
+                print(f"  {'-'*60}")
+                for r in block_all:
+                    dp = r.get('discount', 0) or 0
+                    dp_str = f"{dp:+.2f}%" if isinstance(dp, (int, float)) and dp != 0 else '-'
+                    amt = r.get('amount', 0) or 0
+                    amt_str = f"{amt/1e4:,.0f}万" if amt > 1e4 else f"{amt:.0f}"
+                    print(f"  {str(r['date']):<12s} {r['code']:<8s} {r['name']:<8s} {r.get('deal_price', 0):>8.2f} {dp_str:>8s} {amt_str:>10s}")
+            else:
+                print(f"  无数据")
+    except Exception as e:
+        print(f"  获取失败: {e}")
+
+    print(f"\n{'='*70}")
+    print(f"  ⚠️ 以上数据仅供参考，不构成投资建议")
+    print(f"{'='*70}")
+
+
 def cmd_list(args):
     """列出可用资源"""
     print(f"\n{'='*60}")
@@ -1536,6 +1806,16 @@ def main():
 
     subparsers.add_parser('list', help='列出可用指标/策略/形态')
 
+    # market (市场情绪面)
+    p_market = subparsers.add_parser('market', help='市场情绪面 (涨停池/龙虎榜/板块资金流/北向/融资融券)')
+    p_market.add_argument('--limit', '-n', type=int, default=15, help='每项显示数量 (默认15)')
+    p_market.add_argument('--days', '-d', type=int, default=5, help='龙虎榜最近N天 (默认5)')
+    p_market.add_argument('--period', '-p', default='今日', choices=['今日', '5日', '10日'], help='板块资金流周期')
+
+    # info (个股深度信息)
+    p_info = subparsers.add_parser('info', help='个股深度信息 (解禁/股东/十大股东/基金/大宗/估值)')
+    p_info.add_argument('code', help='股票代码 (如 sh600519)')
+
     # cache
     p_cache = subparsers.add_parser('cache', help='数据缓存管理')
     p_cache.add_argument('action', choices=['stats', 'clear'], help='stats=查看统计, clear=清理缓存')
@@ -1617,6 +1897,8 @@ def main():
         'hotspot': cmd_hotspot,
         'realtime': cmd_realtime,
         'search': cmd_search,
+        'market': cmd_market,
+        'info': cmd_info,
         'em-diagnose': cmd_em_diagnose,
         'em-pick': cmd_em_pick,
         'em-ask': cmd_em_ask,

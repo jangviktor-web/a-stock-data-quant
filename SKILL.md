@@ -53,6 +53,8 @@ pip install akshare numpy pandas requests
 ├─ "AI基金分析" ───────────→ em-fund
 ├─ "宏观数据(CPI/GDP)" ───→ macro
 ├─ "市场热点" ─────────────→ hotspot
+├─ "市场情绪/涨停/跌停" ──→ market
+├─ "个股深度/股东/解禁" ──→ info
 ├─ "缓存管理" ─────────────→ cache
 └─ "有哪些功能" ───────────→ list
 ```
@@ -260,6 +262,58 @@ python3 bin/quant.py hotspot --top 30
 
 ⚠️ hotspot 依赖东方财富网络接口，部分网络环境下可能不可用。
 
+### market — 市场情绪面分析
+
+涨停池/跌停池/情绪判断/龙虎榜/板块资金流/北向资金/融资融券，一站式市场情绪全景。
+
+```bash
+python3 bin/quant.py market                      # 默认参数
+python3 bin/quant.py market --limit 10 --days 5  # 显示10条，龙虎榜近5日
+python3 bin/quant.py market --period 5日          # 板块资金流用5日累计
+```
+
+```
+🌊 市场情绪面分析
+  🔴 涨停池: 54只（利仁科技5连板、蒙娜丽莎6连板）
+  🟢 跌停池: 15只（通达股份2连跌停）
+  情绪判断: 涨停54只 / 跌停15只 → 🌊 正常
+  🐉 龙虎榜: 德明利 +22.1亿、长盈通 +15.0亿
+  📋 融资融券: 融资余额 14,408亿
+```
+
+**情绪周期速查**：
+
+| 状态 | 涨停数 | 跌停数 | 操作建议 |
+|------|--------|--------|---------|
+| ❄️ 冰点期 | <30 | >50 | 最好的埋伏时机 |
+| 🌡️ 修复期 | 增多 | 减少 | 小仓位试探 |
+| 🔥 高潮期 | >100 | <10 | 最危险，准备撤退 |
+| 🌊 退潮期 | 减少 | 增多 | 绝不追高 |
+
+### info — 个股深度信息
+
+限售解禁/股东人数变化/十大流通股东/行业PE估值/大宗交易，个股多维度深度分析。
+
+```bash
+python3 bin/quant.py info 600519     # 茅台深度信息
+python3 bin/quant.py info 000858     # 五粮液深度信息
+```
+
+```
+📋 个股深度信息: 600519
+  📅 限售解禁: 近期无解禁
+  👥 股东人数: 2026Q1 243,159户 (减少12,733户 -4.98%) → 筹码集中 🟢
+  🏛️ 十大流通股东: 茅台集团54.07%、港中央6.91%(+609万股)
+  📊 行业PE: 制造业 加权PE 37.51 / 中位PE 52.00
+  🏷️ 大宗交易: 2026-05-15 成交价1332.96 2笔
+```
+
+**解读要点**：
+- 股东人数减少 → 筹码集中，主力在吸筹（偏多）
+- 股东人数增加 → 散户化趋势（偏空）
+- 十大股东增减 → 机构/港资是否在加仓
+- 行业PE对比 → 个股PE是否高于行业中位
+
 ### 东方财富妙想 AI (em-*)
 
 需在 `config.yaml` 设置 `em_api_key`。注册：https://ai.eastmoney.com/mxClaw
@@ -438,6 +492,10 @@ quant-china/
   │   → backtest.py (回测) → chart.py (HTML) → output
   ├─ realtime/search
   │   → realtime_data.py (腾讯/东方财富) → output
+  ├─ market (市场情绪面)
+  │   → akshare_data.py (涨停池/跌停池/龙虎榜/北向/融资融券) → output
+  ├─ info (个股深度)
+  │   → akshare_data.py (限售解禁/股东人数/十大股东/行业PE/大宗交易) → output
   ├─ em-diagnose/em-pick/em-ask/em-news/em-fund
   │   → em_api.py (东方财富妙想AI) → output
   └─ macro/hotspot/cache/list

@@ -308,6 +308,516 @@ def get_macro_data(indicator='cpi'):
     return {'indicator': indicator, 'data': rows, 'columns': list(df.columns)}
 
 
+# ── 涨停/跌停/强势池 ──────────────────────────────────────
+
+def _recent_trade_date(date=''):
+    """获取最近交易日（周末回退到周五）"""
+    if date:
+        return date
+    from datetime import datetime, timedelta
+    dt = datetime.now()
+    # 如果是周末或下午3点前，回退
+    if dt.weekday() >= 5:  # 周六=5, 周日=6
+        dt -= timedelta(days=dt.weekday() - 4)  # 回到周五
+    elif dt.weekday() == 0 and dt.hour < 15:  # 周一还没收盘
+        dt -= timedelta(days=3)  # 回到周五
+    elif dt.hour < 15:  # 工作日还没收盘
+        dt -= timedelta(days=1)
+    return dt.strftime('%Y%m%d')
+
+
+def get_zt_pool(date='', limit=30):
+    """
+    获取涨停股票池
+
+    Parameters
+    ----------
+    date : str - 日期 YYYYMMDD (空=自动取最近交易日)
+    limit : int - 返回数量
+
+    Returns
+    -------
+    list of dict
+    """
+    _require_akshare()
+    date = _recent_trade_date(date)
+    try:
+        df = ak.stock_zt_pool_em(date=date)
+    except Exception as e:
+        return []
+
+    if df is None or df.empty:
+        return []
+
+    rows = []
+    for _, r in df.head(limit).iterrows():
+        rows.append({
+            'code': str(r.get('代码', '')),
+            'name': str(r.get('名称', '')),
+            'chg_pct': r.get('涨跌幅', 0),
+            'price': r.get('最新价', 0),
+            'amount': r.get('成交额', 0),
+            'turnover': r.get('换手率', 0),
+            'seal_amount': r.get('封板资金', 0),
+            'first_seal': str(r.get('首次封板时间', '')),
+            'last_seal': str(r.get('最后封板时间', '')),
+            'break_count': r.get('炸板次数', 0),
+            'zt_stat': str(r.get('涨停统计', '')),
+            'streak': r.get('连板数', 0),
+            'industry': str(r.get('所属行业', '')),
+        })
+    return rows
+
+
+def get_dt_pool(date='', limit=30):
+    """
+    获取跌停股票池
+
+    Parameters
+    ----------
+    date : str - 日期 YYYYMMDD (空=自动取最近交易日)
+    limit : int - 返回数量
+
+    Returns
+    -------
+    list of dict
+    """
+    _require_akshare()
+    date = _recent_trade_date(date)
+    try:
+        df = ak.stock_zt_pool_dtgc_em(date=date)
+    except Exception as e:
+        return []
+
+    if df is None or df.empty:
+        return []
+
+    rows = []
+    for _, r in df.head(limit).iterrows():
+        rows.append({
+            'code': str(r.get('代码', '')),
+            'name': str(r.get('名称', '')),
+            'chg_pct': r.get('涨跌幅', 0),
+            'price': r.get('最新价', 0),
+            'amount': r.get('成交额', 0),
+            'turnover': r.get('换手率', 0),
+            'seal_amount': r.get('封单资金', 0),
+            'consecutive': r.get('连续跌停', 0),
+            'industry': str(r.get('所属行业', '')),
+        })
+    return rows
+
+
+# ── 龙虎榜统计 ──────────────────────────────────────────────
+
+def get_lhb_data(days=5, limit=30):
+    """
+    获取龙虎榜统计
+
+    Parameters
+    ----------
+    days : str - 最近 N 天: '5'/'10'/'30'/'60'
+    limit : int - 返回数量
+
+    Returns
+    -------
+    list of dict
+    """
+    _require_akshare()
+    try:
+        df = ak.stock_lhb_ggtj_sina(symbol=str(days))
+    except Exception as e:
+        return []
+
+    if df is None or df.empty:
+        return []
+
+    rows = []
+    for _, r in df.head(limit).iterrows():
+        rows.append({
+            'code': str(r.get('股票代码', '')),
+            'name': str(r.get('股票名称', '')),
+            'count': r.get('上榜次数', 0),
+            'buy_amt': r.get('累积购买额', 0),
+            'sell_amt': r.get('累积卖出额', 0),
+            'net_buy': r.get('净额', 0),
+            'buy_seats': r.get('买入席位数', 0),
+            'sell_seats': r.get('卖出席位数', 0),
+        })
+    return rows
+
+
+# ── 板块资金流排名 ──────────────────────────────────────────
+
+def get_sector_fund_rank(days='今日', category='行业资金流', limit=20):
+    """
+    获取板块资金流排名
+
+    Parameters
+    ----------
+    days : str - '今日' / '5日' / '10日'
+    category : str - '行业资金流' / '概念资金流' / '地域资金流'
+    limit : int - 返回数量
+
+    Returns
+    -------
+    list of dict
+    """
+    _require_akshare()
+    try:
+        df = ak.stock_sector_fund_flow_rank(indicator=days, sector_type=category)
+    except Exception as e:
+        return []
+
+    if df is None or df.empty:
+        return []
+
+    rows = []
+    for _, r in df.head(limit).iterrows():
+        rows.append({
+            'name': str(r.get('名称', '')),
+            'chg_pct': r.get('涨跌幅', 0),
+            'main_net': r.get('主力净流入-净额', 0),
+            'main_pct': r.get('主力净流入-净占比', 0),
+            'super_large_net': r.get('超大单净流入-净额', 0),
+            'large_net': r.get('大单净流入-净额', 0),
+        })
+    return rows
+
+
+# ── 限售解禁 ──────────────────────────────────────────────
+
+def get_locked_shares(code='', limit=20):
+    """
+    获取限售解禁日历
+
+    Parameters
+    ----------
+    code : str - 股票代码 (纯数字，如 '600519')，不传则查默认股票
+    limit : int - 返回数量
+
+    Returns
+    -------
+    list of dict
+    """
+    _require_akshare()
+    if not code:
+        code = '600000'
+    try:
+        df = ak.stock_restricted_release_queue_sina(symbol=code)
+    except Exception as e:
+        return []
+
+    if df is None or df.empty:
+        return []
+
+    rows = []
+    for _, r in df.head(limit).iterrows():
+        rows.append({
+            'date': str(r.get('解禁日期', '')),
+            'code': str(r.get('代码', '')),
+            'name': str(r.get('名称', '')),
+            'release_amount': r.get('解禁数量', 0),
+            'release_value': r.get('解禁股流通市值', 0),
+        })
+    return rows
+
+
+# ── 股东人数 ──────────────────────────────────────────────
+
+def get_holder_num(code):
+    """
+    获取股东人数变化
+
+    Parameters
+    ----------
+    code : str - 股票代码 (纯数字)
+
+    Returns
+    -------
+    list of dict
+    """
+    _require_akshare()
+    try:
+        df = ak.stock_zh_a_gdhs_detail_em(symbol=code)
+    except Exception as e:
+        return []
+
+    if df is None or df.empty:
+        return []
+
+    rows = []
+    for _, r in df.iterrows():
+        rows.append({
+            'date': str(r.get('股东户数统计截止日', '')),
+            'holder_count': r.get('股东户数-本次', 0),
+            'avg_amount': r.get('户均持股市值', 0),
+            'avg_shares': r.get('户均持股数量', 0),
+            'total_market': r.get('总市值', 0),
+            'change': r.get('股东户数-增减', 0),
+            'change_pct': r.get('股东户数-增减比例', 0),
+        })
+    return rows
+
+
+# ── 十大股东 ──────────────────────────────────────────────
+
+def get_top10_holders(code, holder_type='circulate'):
+    """
+    获取十大股东
+
+    Parameters
+    ----------
+    code : str - 股票代码 (纯数字，如 '600519')
+    holder_type : str - 'main'(十大股东) / 'circulate'(十大流通股东)
+
+    Returns
+    -------
+    dict with 'holdings'
+    """
+    _require_akshare()
+    result = {'holdings': []}
+
+    # 确定市场前缀
+    if code.startswith(('0', '3')):
+        symbol = f'sz{code}'
+    elif code.startswith('6'):
+        symbol = f'sh{code}'
+    else:
+        symbol = f'sh{code}'
+
+    try:
+        if holder_type == 'main':
+            df = ak.stock_gdfx_top_10_em(symbol=symbol)
+        else:
+            df = ak.stock_gdfx_free_top_10_em(symbol=symbol)
+    except Exception as e:
+        return result
+
+    if df is None or df.empty:
+        return result
+
+    for _, r in df.head(10).iterrows():
+        result['holdings'].append({
+            'rank': r.get('名次', 0),
+            'holder': str(r.get('股东名称', '')),
+            'nature': str(r.get('股东性质', '')),
+            'shares': r.get('持股数', 0),
+            'ratio': r.get('占总流通股本持股比例', 0),
+            'type': str(r.get('股份类型', '')),
+            'change': str(r.get('增减', '')),
+            'change_pct': r.get('变动比率', 0),
+        })
+    return result
+
+
+# ── 基金重仓 ──────────────────────────────────────────────
+
+def get_institutional_holdings(limit=20):
+    """
+    获取基金重仓股（基金持仓报告）
+
+    Parameters
+    ----------
+    limit : int - 返回数量
+
+    Returns
+    -------
+    list of dict
+    """
+    _require_akshare()
+    try:
+        df = ak.stock_report_fund_hold(symbol='基金持仓')
+    except Exception as e:
+        return []
+
+    if df is None or df.empty:
+        return []
+
+    rows = []
+    for _, r in df.head(limit).iterrows():
+        rows.append({
+            'code': str(r.get('股票代码', '')),
+            'name': str(r.get('股票简称', '')),
+            'fund_count': r.get('持有基金家数', 0),
+            'shares': r.get('持股总数', 0),
+            'market_value': r.get('持股市值', 0),
+            'change': str(r.get('持股变化', '')),
+            'change_value': r.get('持股变动数值', 0),
+            'change_pct': r.get('持股变动比例', 0),
+        })
+    return rows
+
+
+# ── 行业PE对比 ──────────────────────────────────────────────
+
+def get_industry_pe(limit=20):
+    """
+    获取行业PE对比（证监会行业分类，一级行业）
+
+    Returns
+    -------
+    list of dict
+    """
+    _require_akshare()
+    from datetime import datetime, timedelta
+
+    # 尝试最近的日期，cninfo数据有延迟
+    df = None
+    for delta in [0, 7, 30, 90, 180]:
+        try:
+            date = (datetime.now() - timedelta(days=delta)).strftime('%Y%m%d')
+            df = ak.stock_industry_pe_ratio_cninfo(symbol='证监会行业分类', date=date)
+            if df is not None and not df.empty:
+                break
+        except Exception:
+            continue
+
+    if df is None or df.empty:
+        return []
+
+    # 只取一级行业 (行业层级=1)
+    if '行业层级' in df.columns:
+        df = df[df['行业层级'] == 1.0]
+
+    rows = []
+    for _, r in df.head(limit).iterrows():
+        rows.append({
+            'industry': str(r.get('行业名称', '')),
+            'company_count': r.get('公司数量', 0),
+            'pe_weighted': r.get('静态市盈率-加权平均', 0),
+            'pe_median': r.get('静态市盈率-中位数', 0),
+            'market_cap': r.get('总市值-静态', 0),
+        })
+    return rows
+
+
+# ── 市场PE分位 ──────────────────────────────────────────────
+
+def get_market_pe_percentile():
+    """
+    获取市场估值分位
+
+    Returns
+    -------
+    dict
+    """
+    _require_akshare()
+    result = {}
+    try:
+        df = ak.stock_a_pe_and_target(symbol='上证A股')
+        if df is not None and not df.empty:
+            latest = df.iloc[-1]
+            result['index'] = '上证A股'
+            result['pe'] = latest.get('滚动PE', latest.get('PE', 0))
+    except Exception:
+        pass
+
+    try:
+        result['pe_median'] = ak.stock_a_all_pe()
+    except Exception:
+        pass
+
+    return result
+
+
+# ── 大宗交易 ──────────────────────────────────────────────
+
+def get_block_trade(code='', limit=20):
+    """
+    获取大宗交易
+
+    Parameters
+    ----------
+    code : str - 股票代码 (纯数字，空=全市场)
+    limit : int - 返回数量
+
+    Returns
+    -------
+    list of dict
+    """
+    _require_akshare()
+    from datetime import datetime, timedelta
+
+    end = datetime.now().strftime('%Y%m%d')
+    start = (datetime.now() - timedelta(days=10)).strftime('%Y%m%d')
+
+    try:
+        df = ak.stock_dzjy_mrtj(start_date=start, end_date=end)
+    except Exception as e:
+        return []
+
+    if df is None or df.empty:
+        return []
+
+    # 如果指定股票，过滤
+    if code:
+        df = df[df['证券代码'].astype(str).str.contains(code)]
+
+    rows = []
+    for _, r in df.head(limit).iterrows():
+        rows.append({
+            'date': str(r.get('交易日期', '')),
+            'code': str(r.get('证券代码', '')),
+            'name': str(r.get('证券简称', '')),
+            'close': r.get('收盘价', 0),
+            'deal_price': r.get('成交价', 0),
+            'discount': r.get('折溢率', 0),
+            'amount': r.get('成交总额', 0),
+            'count': r.get('成交笔数', 0),
+            'volume': r.get('成交总量', 0),
+        })
+    return rows
+
+
+# ── 融资融券 (个股) ──────────────────────────────────────────
+
+def get_margin_detail(code, market='sh', days=10):
+    """
+    获取个股融资融券数据
+
+    Parameters
+    ----------
+    code : str - 股票代码
+    market : str - 'sh' / 'sz'
+    days : int - 返回天数
+
+    Returns
+    -------
+    list of dict
+    """
+    _require_akshare()
+    from datetime import datetime, timedelta
+
+    # 尝试上交所/深交所数据
+    df = None
+    try:
+        end = datetime.now().strftime('%Y%m%d')
+        start = (datetime.now() - timedelta(days=days*2)).strftime('%Y%m%d')
+        if market == 'sh':
+            df = ak.stock_margin_detail_sse(date=end)
+        else:
+            df = ak.stock_margin_detail_szse(date=end)
+
+        if df is not None and not df.empty:
+            code_col = '标的证券代码' if '标的证券代码' in df.columns else '证券代码'
+            if code_col in df.columns:
+                df = df[df[code_col].astype(str).str.contains(code)]
+    except Exception:
+        pass
+
+    if df is None or df.empty:
+        return []
+
+    rows = []
+    for _, r in df.head(days).iterrows():
+        row = {}
+        for col in df.columns:
+            row[str(col)] = r[col]
+        rows.append(row)
+    return rows
+
+
 # ── 市场热点 ──────────────────────────────────────────────
 
 def get_market_hotspot(top_n=20):
