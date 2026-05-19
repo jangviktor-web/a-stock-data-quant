@@ -325,7 +325,7 @@ def save_backtest_chart(code, df, result, strategy_name='', signals=None):
   <div class="stat-card"><div class="stat-value neutral">{d['buy_hold_return']:+.2f}%</div><div class="stat-label">买入持有收益</div></div>
 </div>
 <div style="text-align:center; padding: 20px; color: #666; font-size: 12px;">
-  ⚠️ 以上分析仅供参考，不构成投资建议 | 由 quant-china 生成
+  ⚠️ 以上分析仅供参考，不构成投资建议 | 由 a-stock-data-quant 生成
 </div>
 """
     # 在 </body> 前插入统计面板
@@ -392,7 +392,7 @@ def save_analyze_chart(code, df, all_results, signals_map=None):
   </table>
 </div>
 <div style="text-align:center; padding: 20px; color: #666; font-size: 12px;">
-  ⚠️ 以上分析仅供参考，不构成投资建议 | 由 quant-china 生成
+  ⚠️ 以上分析仅供参考，不构成投资建议 | 由 a-stock-data-quant 生成
 </div>
 """
     html = html.replace('</body>', stats_html + '</body>')

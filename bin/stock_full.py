@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 老六综合选股系统 v1.0
-融合 quant-china + ths-sdk + 新闻分析
+融合 a-stock-data-quant + ths-sdk + 新闻分析
 四维评分：资金面(40%) + 板块面(25%) + 技术面(20%) + 消息面(15%)
 """
 
@@ -31,7 +31,7 @@ except ImportError:
     pass
 
 
-# ── 资金面分析 (quant-china + akshare) ─────────────────
+# ── 资金面分析 (a-stock-data-quant + akshare) ─────────────────
 
 def analyze_fund(code):
     """资金面：主力流向 + 融资融券"""
@@ -87,7 +87,7 @@ def analyze_fund(code):
     return result
 
 
-# ── 技术面分析 (quant-china) ──────────────────────────
+# ── 技术面分析 (a-stock-data-quant) ──────────────────────────
 
 def analyze_tech(code):
     """技术面：MACD + KDJ + RSI + 均线 + 量价"""

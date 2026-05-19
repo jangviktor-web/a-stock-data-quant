@@ -1,4 +1,4 @@
-# quant-china
+# a-stock-data-quant
 
 A股量化分析工具箱 — 技术指标、形态识别、策略回测、多股对比、市场扫描
 

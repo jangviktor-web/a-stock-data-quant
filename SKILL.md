@@ -1,5 +1,5 @@
 ---
-name: quant-china
+name: a-stock-data-quant
 description: "A股量化分析工具箱。触发词：量化、选股、回测、技术分析、MACD、RSI、KDJ、资金流向、形态识别、实时行情、AI诊断、新闻资讯。用途：技术面分析、多股对比、策略回测、市场扫描、实时报价、AI金融分析、新闻快讯。入口：python3 bin/quant.py <命令> <股票代码>"
 allowedTools:
   - Bash
@@ -8,7 +8,7 @@ allowedTools:
   - Grep
 ---
 
-# quant-china — A股量化分析工具箱
+# a-stock-data-quant — A股量化分析工具箱
 
 > 技术指标 · 形态识别 · 策略回测 · 实时行情 · 新闻资讯 · AI金融分析（东方财富妙想）
 
@@ -487,7 +487,7 @@ python3 bin/quant.py list
 ## 项目结构
 
 ```
-quant-china/
+a-stock-data-quant/
 ├── bin/
 │   ├── quant.py              # CLI 主入口
 │   └── stock_full.py         # 综合分析脚本

@@ -1,4 +1,4 @@
-# quant-china
+# a-stock-data-quant
 
 A股量化分析工具箱 — 技术指标 · 形态识别 · 策略回测 · 实时行情 · AI金融分析
 
@@ -650,7 +650,7 @@ PSY   心理线           SAR   抛物线指标
 ## 🏗️ 项目结构
 
 ```
-quant-china/
+a-stock-data-quant/
 ├── bin/
 │   ├── quant.py              # CLI 主入口
 │   └── stock_full.py         # 综合分析脚本

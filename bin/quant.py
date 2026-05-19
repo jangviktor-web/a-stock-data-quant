@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-quant-china CLI 入口
+a-stock-data-quant CLI 入口
 A股量化分析工具箱 - 行情数据、技术指标、形态识别、策略回测
 """
 
@@ -1751,7 +1751,7 @@ def cmd_list(args):
 def main():
     parser = argparse.ArgumentParser(
         prog='quant.py',
-        description='quant-china: A股量化分析工具箱',
+        description='a-stock-data-quant: A股量化分析工具箱',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
