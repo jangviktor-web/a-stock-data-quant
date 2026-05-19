@@ -1,13 +1,20 @@
 ---
 name: quant-china
-description: "A股量化分析工具箱。触发词：量化、选股、回测、技术分析、MACD、RSI、KDJ、资金流向、形态识别、实时行情、AI诊断。用途：技术面分析、多股对比、策略回测、市场扫描、实时报价、AI金融分析。入口：python3 bin/quant.py <命令> <股票代码>"
+description: "A股量化分析工具箱。触发词：量化、选股、回测、技术分析、MACD、RSI、KDJ、资金流向、形态识别、实时行情、AI诊断、新闻资讯。用途：技术面分析、多股对比、策略回测、市场扫描、实时报价、AI金融分析、新闻快讯。入口：python3 bin/quant.py <命令> <股票代码>"
+allowedTools:
+  - Bash
+  - Read
+  - Glob
+  - Grep
 ---
 
 # quant-china — A股量化分析工具箱
 
-> 技术指标 · 形态识别 · 策略回测 · 实时行情 · AI金融分析（东方财富妙想）
+> 技术指标 · 形态识别 · 策略回测 · 实时行情 · 新闻资讯 · AI金融分析（东方财富妙想）
 
 **⚠️ 免责声明**：本工具仅供学习研究，不构成投资建议。技术分析基于历史数据，不预测未来。
+
+**🔄 多数据源**: 主源 akshare 失效时自动降级到备用源（百度/mootdx/datacenter/同花顺），确保数据可用性。
 
 ---
 
@@ -18,6 +25,7 @@ python3 bin/quant.py analyze sh600519                    # 综合分析
 python3 bin/quant.py compare sh600519,sz000858           # 多股对比
 python3 bin/quant.py backtest sh510500 --strategy ensemble --html  # 回测+图表
 python3 bin/quant.py realtime sh600519,sz000858          # 实时行情
+python3 bin/quant.py news                                # 新闻快讯
 python3 bin/quant.py em-diagnose sh600519                # AI诊断
 python3 bin/quant.py search 白银                          # 搜索股票
 ```
@@ -56,6 +64,7 @@ pip install akshare numpy pandas requests
 ├─ "市场情绪/涨停/跌停" ──→ market
 ├─ "个股深度/股东/解禁" ──→ info
 ├─ "缓存管理" ─────────────→ cache
+├─ "新闻/快讯/资讯" ────────→ news
 └─ "有哪些功能" ───────────→ list
 ```
 
@@ -344,6 +353,24 @@ python3 bin/quant.py em-fund sh600519                      # AI基金分析
   ...
 ```
 
+### news — 新闻资讯
+
+东财7x24快讯 + 财联社电报 + 东财搜索，实时掌握市场动态。
+
+```bash
+python3 bin/quant.py news                    # 快讯列表 (东财7x24+财联社)
+python3 bin/quant.py news 茅台                # 搜索关键词
+python3 bin/quant.py news --top 10           # 显示10条
+```
+
+```
+📰 新闻资讯
+  1. 【水利部针对赣鄂湘粤桂黔琼七省区启动洪水防御Ⅳ级应急响应】
+     2026-05-19 13:42  [财联社]
+  2. 【三星电子股价转涨，抹去早盘5.3%的跌幅】
+     2026-05-19 13:41  [财联社]
+```
+
 ### cache — 缓存管理
 
 ```bash
@@ -465,16 +492,22 @@ quant-china/
 │   ├── quant.py              # CLI 主入口
 │   └── stock_full.py         # 综合分析脚本
 ├── lib/
-│   ├── akshare_data.py       # akshare 数据层
-│   ├── ashare.py             # 行情数据获取
+│   ├── akshare_data.py       # akshare 数据层 (含降级链)
+│   ├── ashare.py             # 行情数据获取 (含mootdx/百度降级)
 │   ├── backtest.py           # 回测引擎
 │   ├── chart.py              # ECharts HTML 图表
 │   ├── data_cache.py         # CSV 数据缓存
 │   ├── em_api.py             # 东方财富妙想 AI 接口
+│   ├── fallback.py           # 多数据源降级引擎
 │   ├── mytt.py               # 技术指标库（MyTT）
 │   ├── patterns.py           # 形态识别
-│   ├── realtime_data.py      # 腾讯/东方财富实时行情
+│   ├── realtime_data.py      # 实时行情 (腾讯/东方财富/mootdx)
 │   ├── settings.py           # 配置管理
+│   ├── sources_baidu.py      # 百度财经 API (K线/资金流/概念)
+│   ├── sources_datacenter.py # 东财数据中心 (龙虎榜/融资/大宗/股东/解禁)
+│   ├── sources_hexin.py      # 同花顺北向资金
+│   ├── sources_mootdx.py     # 通达信 TCP 7709 (实时/K线)
+│   ├── sources_news.py       # 新闻聚合 (东财7x24/财联社/搜索)
 │   └── strategies.py         # 策略模块
 ├── config.yaml               # 配置文件（em_api_key等）
 ├── requirements.txt          # Python 依赖
@@ -488,10 +521,13 @@ quant-china/
 ```
 用户输入 → 意图路由 → quant.py CLI
   ├─ analyze/compare/backtest/scan/indicators/pattern/fund/diagnose
-  │   → akshare_data.py (数据) → mytt.py (指标) → strategies.py (信号)
+  │   → akshare_data.py → mytt.py (指标) → strategies.py (信号)
+  │   → [降级] → sources_baidu.py / sources_datacenter.py / sources_hexin.py
   │   → backtest.py (回测) → chart.py (HTML) → output
   ├─ realtime/search
-  │   → realtime_data.py (腾讯/东方财富) → output
+  │   → realtime_data.py (腾讯→东方财富→mootdx) → output
+  ├─ news (新闻资讯)
+  │   → sources_news.py (东财7x24/财联社/东财搜索) → output
   ├─ market (市场情绪面)
   │   → akshare_data.py (涨停池/跌停池/龙虎榜/北向/融资融券) → output
   ├─ info (个股深度)

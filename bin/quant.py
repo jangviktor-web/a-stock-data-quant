@@ -1675,6 +1675,36 @@ def cmd_info(args):
     print(f"{'='*70}")
 
 
+def cmd_news(args):
+    """新闻资讯 — 东财7x24/财联社/东财搜索"""
+    from lib.sources_news import get_all_news, get_eastmoney_search
+
+    print(f"\n{'='*70}")
+    print(f"  📰 新闻资讯")
+    print(f"{'='*70}")
+
+    if args.keyword:
+        print(f"  搜索: {args.keyword}")
+        items = get_eastmoney_search(args.keyword, count=args.top)
+    else:
+        items = get_all_news(page_size=args.top)
+
+    if items:
+        for i, item in enumerate(items[:args.top], 1):
+            title = item.get('title', '')
+            time_str = item.get('time', '')
+            source = item.get('source', '')
+            content = item.get('content', '')[:100]
+            print(f"\n  {i}. 【{title}】")
+            print(f"     {time_str}  [{source}]")
+            if content:
+                print(f"     {content}")
+    else:
+        print("  暂无新闻数据")
+
+    print(f"\n{'='*70}")
+
+
 def cmd_list(args):
     """列出可用资源"""
     print(f"\n{'='*60}")
@@ -1847,6 +1877,11 @@ def main():
     p_search.add_argument('keyword', help='搜索关键词')
     p_search.add_argument('--source', '-s', default='auto', choices=['auto', 'tencent', 'eastmoney'], help='数据源')
 
+    # news
+    p_news = subparsers.add_parser('news', help='新闻资讯 (东财7x24/财联社/东财搜索)')
+    p_news.add_argument('keyword', nargs='?', default='', help='搜索关键词 (空=快讯列表)')
+    p_news.add_argument('--top', '-n', type=int, default=20, help='显示数量')
+
     # em-diagnose (东方财富妙想 AI 诊断)
     p_emd = subparsers.add_parser('em-diagnose', help='东方财富妙想 AI 股票诊断')
     p_emd.add_argument('code', help='股票代码 (如 sh600519) 或基金代码')
@@ -1899,6 +1934,7 @@ def main():
         'search': cmd_search,
         'market': cmd_market,
         'info': cmd_info,
+        'news': cmd_news,
         'em-diagnose': cmd_em_diagnose,
         'em-pick': cmd_em_pick,
         'em-ask': cmd_em_ask,

@@ -2,9 +2,12 @@
 akshare 数据层 — 资金流向、北向资金、板块行情、融资融券
 
 依赖 akshare >= 1.18.x
+支持多数据源降级: akshare → 备用源 (百度/mootdx/datacenter/同花顺)
 """
 
 import warnings
+import sys
+import os
 warnings.filterwarnings("ignore")
 
 try:
@@ -16,8 +19,8 @@ except ImportError:
 
 def _require_akshare():
     """检查 akshare 是否已安装"""
-    if not HAS_AKSHARE:
-        raise RuntimeError("akshare 未安装，请运行: pip3 install akshare")
+    if not HAS_AKSHARE or os.environ.get('AKSHARE_MOCK_FAIL'):
+        raise RuntimeError("akshare 未安装或被禁用")
 
 
 def _safe_call(func, *args, **kwargs):
@@ -29,28 +32,56 @@ def _safe_call(func, *args, **kwargs):
         raise RuntimeError(f"akshare 接口调用失败: {e}") from e
 
 
-# ── 个股资金流向 ──────────────────────────────────────────
-
-def get_fund_flow(code, market=None):
+def _with_fallback(primary_fn, *backup_fns):
     """
-    获取个股主力资金流向
+    多数据源降级包装器
 
     Parameters
     ----------
-    code : str - 股票代码 (纯数字，如 '600519')
-    market : str - 市场 ('sh' 或 'sz')，不传则自动判断
-
-    Returns
-    -------
-    dict: {'rows': [...], 'summary': {...}}
+    primary_fn : callable - 主数据源函数
+    *backup_fns : (name, callable) 备用数据源
     """
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            # 尝试主数据源
+            try:
+                result = primary_fn(*args, **kwargs)
+                if result is not None and result != [] and result != {}:
+                    if isinstance(result, list) and len(result) > 0:
+                        if isinstance(result[0], dict) and 'error' in result[0]:
+                            raise RuntimeError(result[0]['error'])
+                    if isinstance(result, dict) and 'error' in result:
+                        raise RuntimeError(result['error'])
+                    return result
+            except Exception as e:
+                print(f"  [降级] akshare 不可用({e})，尝试备用源", file=sys.stderr)
+
+            # 尝试备用源
+            for name, backup_fn in backup_fns:
+                try:
+                    result = backup_fn(*args, **kwargs)
+                    if result is not None and result != [] and result != {}:
+                        print(f"  [降级] 已切换到备用源: {name}", file=sys.stderr)
+                        return result
+                except Exception as e2:
+                    print(f"  [降级] {name} 也失败: {e2}", file=sys.stderr)
+
+            # 全部失败，返回空结果
+            return func(*args, **kwargs)
+        wrapper.__name__ = func.__name__
+        wrapper.__doc__ = func.__doc__
+        return wrapper
+    return decorator
+
+
+# ── 个股资金流向 ──────────────────────────────────────────
+
+def _ak_fund_flow(code, market=None):
+    """akshare 资金流向"""
     _require_akshare()
     if market is None:
         market = 'sz' if code.startswith(('0', '3')) else 'sh'
-    try:
-        df = ak.stock_individual_fund_flow(stock=code, market=market)
-    except Exception as e:
-        return {'rows': [], 'summary': {}, 'error': str(e)}
+    df = ak.stock_individual_fund_flow(stock=code, market=market)
 
     if df is None or df.empty:
         return {'rows': [], 'summary': {}}
@@ -82,8 +113,64 @@ def get_fund_flow(code, market=None):
     return {'rows': rows, 'summary': summary}
 
 
+def _baidu_fund_flow(code, market=None):
+    """百度 资金流向"""
+    from lib.sources_baidu import get_fund_flow as baidu_ff
+    mkt = market or ('sz' if code.startswith(('0', '3')) else 'sh')
+    return baidu_ff(code, market=mkt)
+
+
+@_with_fallback(_ak_fund_flow, ('百度', _baidu_fund_flow))
+def get_fund_flow(code, market=None):
+    """
+    获取个股主力资金流向
+
+    Parameters
+    ----------
+    code : str - 股票代码 (纯数字，如 '600519')
+    market : str - 市场 ('sh' 或 'sz')，不传则自动判断
+
+    Returns
+    -------
+    dict: {'rows': [...], 'summary': {...}}
+    """
+    return {'rows': [], 'summary': {}}
+
+
 # ── 北向资金 ──────────────────────────────────────────────
 
+def _ak_north_flow(symbol="沪股通", days=10):
+    """akshare 北向资金"""
+    _require_akshare()
+    df = ak.stock_hsgt_hist_em(symbol=symbol)
+
+    if df is None or df.empty:
+        return []
+
+    rows = []
+    for _, r in df.tail(days).iterrows():
+        net_buy = r.get('当日成交净买额', 0)
+        fund_flow = r.get('当日资金流入', 0)
+        if net_buy != net_buy:
+            net_buy = 0
+        if fund_flow != fund_flow:
+            fund_flow = 0
+        rows.append({
+            'date': str(r.get('日期', '')),
+            'net_buy': float(net_buy),
+            'fund_flow': float(fund_flow),
+            'leader': str(r.get('领涨股', '')),
+        })
+    return rows
+
+
+def _hexin_north_flow(symbol="沪股通", days=10):
+    """同花顺 北向资金"""
+    from lib.sources_hexin import get_north_flow as hexin_nf
+    return hexin_nf(symbol=symbol, days=days)
+
+
+@_with_fallback(_ak_north_flow, ('同花顺', _hexin_north_flow))
 def get_north_flow(symbol="沪股通", days=10):
     """
     获取北向资金（沪股通/深股通）历史数据
@@ -97,52 +184,15 @@ def get_north_flow(symbol="沪股通", days=10):
     -------
     list of dict: [{'date': ..., 'net_buy': ..., 'fund_flow': ..., 'leader': ...}, ...]
     """
-    _require_akshare()
-    try:
-        df = ak.stock_hsgt_hist_em(symbol=symbol)
-    except Exception as e:
-        return [{'error': f"北向资金数据获取失败: {e}"}]
-
-    if df is None or df.empty:
-        return []
-
-    rows = []
-    for _, r in df.tail(days).iterrows():
-        net_buy = r.get('当日成交净买额', 0)
-        fund_flow = r.get('当日资金流入', 0)
-        # 处理 NaN
-        if net_buy != net_buy:  # NaN check
-            net_buy = 0
-        if fund_flow != fund_flow:
-            fund_flow = 0
-        rows.append({
-            'date': str(r.get('日期', '')),
-            'net_buy': float(net_buy),
-            'fund_flow': float(fund_flow),
-            'leader': str(r.get('领涨股', '')),
-        })
-    return rows
+    return []
 
 
 # ── 板块行情 ──────────────────────────────────────────────
 
-def get_sector_hot(top_n=10):
-    """
-    获取行业板块涨跌幅排名
-
-    Parameters
-    ----------
-    top_n : int - 返回涨幅前N和后N
-
-    Returns
-    -------
-    dict: {'hot': [...], 'cold': [...]}
-    """
+def _ak_sector_hot(top_n=10):
+    """akshare 板块涨跌"""
     _require_akshare()
-    try:
-        df = ak.stock_board_industry_name_em()
-    except Exception as e:
-        return {'hot': [], 'cold': [], 'error': str(e)}
+    df = ak.stock_board_industry_name_em()
 
     if df is None or df.empty:
         return {'hot': [], 'cold': []}
@@ -163,19 +213,26 @@ def get_sector_hot(top_n=10):
     return {'hot': hot, 'cold': cold}
 
 
-def get_sector_list():
+@_with_fallback(_ak_sector_hot)
+def get_sector_hot(top_n=10):
     """
-    获取全部行业板块列表（含涨跌幅和最新价）
+    获取行业板块涨跌幅排名
+
+    Parameters
+    ----------
+    top_n : int - 返回涨幅前N和后N
 
     Returns
     -------
-    list of dict: [{'name': ..., 'code': ..., 'chg_pct': ..., 'price': ...}, ...]
+    dict: {'hot': [...], 'cold': [...]}
     """
+    return {'hot': [], 'cold': []}
+
+
+def _ak_sector_list():
+    """akshare 板块列表"""
     _require_akshare()
-    try:
-        df = ak.stock_board_industry_name_em()
-    except Exception as e:
-        return []
+    df = ak.stock_board_industry_name_em()
 
     if df is None or df.empty:
         return []
@@ -191,30 +248,29 @@ def get_sector_list():
     return sectors
 
 
-# ── 融资融券 ──────────────────────────────────────────────
-
-def get_margin_data(days=30):
+@_with_fallback(_ak_sector_list)
+def get_sector_list():
     """
-    获取融资融券数据（上交所）
-
-    Parameters
-    ----------
-    days : int - 获取最近 N 天数据
+    获取全部行业板块列表（含涨跌幅和最新价）
 
     Returns
     -------
-    list of dict: [{'date': ..., 'margin_balance': ..., 'margin_buy': ..., 'short_balance': ...}, ...]
+    list of dict: [{'name': ..., 'code': ..., 'chg_pct': ..., 'price': ...}, ...]
     """
+    return []
+
+
+# ── 融资融券 ──────────────────────────────────────────────
+
+def _ak_margin_data(days=30):
+    """akshare 融资融券"""
     _require_akshare()
     from datetime import datetime, timedelta
 
     end = datetime.now().strftime('%Y%m%d')
     start = (datetime.now() - timedelta(days=days)).strftime('%Y%m%d')
 
-    try:
-        df = ak.stock_margin_sse(start_date=start, end_date=end)
-    except Exception as e:
-        return []
+    df = ak.stock_margin_sse(start_date=start, end_date=end)
 
     if df is None or df.empty:
         return []
@@ -228,6 +284,28 @@ def get_margin_data(days=30):
             'short_balance': r.get('融券余量金额', 0),
         })
     return rows
+
+
+def _dc_margin_data(days=30):
+    """datacenter 融资融券"""
+    from lib.sources_datacenter import get_margin_data as dc_md
+    return dc_md(days=days)
+
+
+@_with_fallback(_ak_margin_data, ('datacenter', _dc_margin_data))
+def get_margin_data(days=30):
+    """
+    获取融资融券数据（上交所）
+
+    Parameters
+    ----------
+    days : int - 获取最近 N 天数据
+
+    Returns
+    -------
+    list of dict: [{'date': ..., 'margin_balance': ..., 'margin_buy': ..., 'short_balance': ...}, ...]
+    """
+    return []
 
 
 # ── 股票综合诊断数据 ────────────────────────────────────────
@@ -410,24 +488,10 @@ def get_dt_pool(date='', limit=30):
 
 # ── 龙虎榜统计 ──────────────────────────────────────────────
 
-def get_lhb_data(days=5, limit=30):
-    """
-    获取龙虎榜统计
-
-    Parameters
-    ----------
-    days : str - 最近 N 天: '5'/'10'/'30'/'60'
-    limit : int - 返回数量
-
-    Returns
-    -------
-    list of dict
-    """
+def _ak_lhb_data(days=5, limit=30):
+    """akshare 龙虎榜"""
     _require_akshare()
-    try:
-        df = ak.stock_lhb_ggtj_sina(symbol=str(days))
-    except Exception as e:
-        return []
+    df = ak.stock_lhb_ggtj_sina(symbol=str(days))
 
     if df is None or df.empty:
         return []
@@ -445,6 +509,29 @@ def get_lhb_data(days=5, limit=30):
             'sell_seats': r.get('卖出席位数', 0),
         })
     return rows
+
+
+def _dc_lhb_data(days=5, limit=30):
+    """datacenter 龙虎榜"""
+    from lib.sources_datacenter import get_lhb_data as dc_lhb
+    return dc_lhb(days=days, limit=limit)
+
+
+@_with_fallback(_ak_lhb_data, ('datacenter', _dc_lhb_data))
+def get_lhb_data(days=5, limit=30):
+    """
+    获取龙虎榜统计
+
+    Parameters
+    ----------
+    days : str - 最近 N 天: '5'/'10'/'30'/'60'
+    limit : int - 返回数量
+
+    Returns
+    -------
+    list of dict
+    """
+    return []
 
 
 # ── 板块资金流排名 ──────────────────────────────────────────
@@ -487,26 +574,12 @@ def get_sector_fund_rank(days='今日', category='行业资金流', limit=20):
 
 # ── 限售解禁 ──────────────────────────────────────────────
 
-def get_locked_shares(code='', limit=20):
-    """
-    获取限售解禁日历
-
-    Parameters
-    ----------
-    code : str - 股票代码 (纯数字，如 '600519')，不传则查默认股票
-    limit : int - 返回数量
-
-    Returns
-    -------
-    list of dict
-    """
+def _ak_locked_shares(code='', limit=20):
+    """akshare 限售解禁"""
     _require_akshare()
     if not code:
         code = '600000'
-    try:
-        df = ak.stock_restricted_release_queue_sina(symbol=code)
-    except Exception as e:
-        return []
+    df = ak.stock_restricted_release_queue_sina(symbol=code)
 
     if df is None or df.empty:
         return []
@@ -523,25 +596,35 @@ def get_locked_shares(code='', limit=20):
     return rows
 
 
-# ── 股东人数 ──────────────────────────────────────────────
+def _dc_locked_shares(code='', limit=20):
+    """datacenter 限售解禁"""
+    from lib.sources_datacenter import get_locked_shares as dc_ls
+    return dc_ls(code=code, limit=limit)
 
-def get_holder_num(code):
+
+@_with_fallback(_ak_locked_shares, ('datacenter', _dc_locked_shares))
+def get_locked_shares(code='', limit=20):
     """
-    获取股东人数变化
+    获取限售解禁日历
 
     Parameters
     ----------
-    code : str - 股票代码 (纯数字)
+    code : str - 股票代码 (纯数字，如 '600519')，不传则查默认股票
+    limit : int - 返回数量
 
     Returns
     -------
     list of dict
     """
+    return []
+
+
+# ── 股东人数 ──────────────────────────────────────────────
+
+def _ak_holder_num(code):
+    """akshare 股东人数"""
     _require_akshare()
-    try:
-        df = ak.stock_zh_a_gdhs_detail_em(symbol=code)
-    except Exception as e:
-        return []
+    df = ak.stock_zh_a_gdhs_detail_em(symbol=code)
 
     if df is None or df.empty:
         return []
@@ -558,6 +641,28 @@ def get_holder_num(code):
             'change_pct': r.get('股东户数-增减比例', 0),
         })
     return rows
+
+
+def _dc_holder_num(code):
+    """datacenter 股东人数"""
+    from lib.sources_datacenter import get_holder_num as dc_hn
+    return dc_hn(code=code)
+
+
+@_with_fallback(_ak_holder_num, ('datacenter', _dc_holder_num))
+def get_holder_num(code):
+    """
+    获取股东人数变化
+
+    Parameters
+    ----------
+    code : str - 股票代码 (纯数字)
+
+    Returns
+    -------
+    list of dict
+    """
+    return []
 
 
 # ── 十大股东 ──────────────────────────────────────────────
@@ -723,34 +828,19 @@ def get_market_pe_percentile():
 
 # ── 大宗交易 ──────────────────────────────────────────────
 
-def get_block_trade(code='', limit=20):
-    """
-    获取大宗交易
-
-    Parameters
-    ----------
-    code : str - 股票代码 (纯数字，空=全市场)
-    limit : int - 返回数量
-
-    Returns
-    -------
-    list of dict
-    """
+def _ak_block_trade(code='', limit=20):
+    """akshare 大宗交易"""
     _require_akshare()
     from datetime import datetime, timedelta
 
     end = datetime.now().strftime('%Y%m%d')
     start = (datetime.now() - timedelta(days=10)).strftime('%Y%m%d')
 
-    try:
-        df = ak.stock_dzjy_mrtj(start_date=start, end_date=end)
-    except Exception as e:
-        return []
+    df = ak.stock_dzjy_mrtj(start_date=start, end_date=end)
 
     if df is None or df.empty:
         return []
 
-    # 如果指定股票，过滤
     if code:
         df = df[df['证券代码'].astype(str).str.contains(code)]
 
@@ -770,26 +860,36 @@ def get_block_trade(code='', limit=20):
     return rows
 
 
-# ── 融资融券 (个股) ──────────────────────────────────────────
+def _dc_block_trade(code='', limit=20):
+    """datacenter 大宗交易"""
+    from lib.sources_datacenter import get_block_trade as dc_bt
+    return dc_bt(code=code, limit=limit)
 
-def get_margin_detail(code, market='sh', days=10):
+
+@_with_fallback(_ak_block_trade, ('datacenter', _dc_block_trade))
+def get_block_trade(code='', limit=20):
     """
-    获取个股融资融券数据
+    获取大宗交易
 
     Parameters
     ----------
-    code : str - 股票代码
-    market : str - 'sh' / 'sz'
-    days : int - 返回天数
+    code : str - 股票代码 (纯数字，空=全市场)
+    limit : int - 返回数量
 
     Returns
     -------
     list of dict
     """
+    return []
+
+
+# ── 融资融券 (个股) ──────────────────────────────────────────
+
+def _ak_margin_detail(code, market='sh', days=10):
+    """akshare 个股融资融券"""
     _require_akshare()
     from datetime import datetime, timedelta
 
-    # 尝试上交所/深交所数据
     df = None
     try:
         end = datetime.now().strftime('%Y%m%d')
@@ -818,10 +918,34 @@ def get_margin_detail(code, market='sh', days=10):
     return rows
 
 
+def _dc_margin_detail(code, market='sh', days=10):
+    """datacenter 个股融资融券"""
+    from lib.sources_datacenter import get_margin_detail as dc_md
+    return dc_md(code=code, market=market, days=days)
+
+
+@_with_fallback(_ak_margin_detail, ('datacenter', _dc_margin_detail))
+def get_margin_detail(code, market='sh', days=10):
+    """
+    获取个股融资融券数据
+
+    Parameters
+    ----------
+    code : str - 股票代码
+    market : str - 'sh' / 'sz'
+    days : int - 返回天数
+
+    Returns
+    -------
+    list of dict
+    """
+    return []
+
+
 # ── 市场热点 ──────────────────────────────────────────────
 
-def get_market_hotspot(top_n=20):
-    """获取市场热点：人气榜 + 概念板块 + 行业板块"""
+def _ak_market_hotspot(top_n=20):
+    """akshare 市场热点"""
     _require_akshare()
     result = {'hot_ranks': [], 'concept_hot': [], 'industry_hot': []}
 
@@ -865,3 +989,9 @@ def get_market_hotspot(top_n=20):
         pass
 
     return result
+
+
+@_with_fallback(_ak_market_hotspot)
+def get_market_hotspot(top_n=20):
+    """获取市场热点：人气榜 + 概念板块 + 行业板块"""
+    return {'hot_ranks': [], 'concept_hot': [], 'industry_hot': []}

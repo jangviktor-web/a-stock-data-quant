@@ -258,10 +258,37 @@ def _search_eastmoney(keyword):
 
 # ── 对外接口 ──────────────────────────────────────────────
 
+_HAS_MOOTDX = None
+
+
+def _check_mootdx():
+    global _HAS_MOOTDX
+    if _HAS_MOOTDX is None:
+        try:
+            from mootdx.quotes import Quotes
+            _HAS_MOOTDX = True
+        except ImportError:
+            _HAS_MOOTDX = False
+    return _HAS_MOOTDX
+
+
+def _fetch_mootdx(codes):
+    """mootdx 实时行情备用源"""
+    from lib.sources_mootdx import get_realtime as mootdx_realtime
+    return mootdx_realtime(codes)
+
+
+def _search_mootdx(keyword):
+    """mootdx 不支持搜索"""
+    return []
+
+
 _SOURCE_MAP = {
     'tencent': (_fetch_tencent, _search_tencent),
     'eastmoney': (_fetch_eastmoney, _search_eastmoney),
 }
+if _check_mootdx():
+    _SOURCE_MAP['mootdx'] = (_fetch_mootdx, _search_mootdx)
 
 
 def get_realtime(codes, source='auto'):
@@ -271,7 +298,7 @@ def get_realtime(codes, source='auto'):
     Parameters
     ----------
     codes : str | list - 股票代码，如 'sh600519' 或 ['sh600519','sz000858']
-    source : str - 数据源 ('auto'|'tencent'|'eastmoney')
+    source : str - 数据源 ('auto'|'tencent'|'eastmoney'|'mootdx')
 
     Returns
     -------
@@ -280,12 +307,18 @@ def get_realtime(codes, source='auto'):
     if isinstance(codes, str):
         codes = [c.strip() for c in codes.split(',') if c.strip()]
 
-    # auto: 优先腾讯，失败则降级东方财富
     if source == 'auto':
+        # 优先腾讯 → 东方财富 → mootdx
         results = _fetch_tencent(codes)
         if results and 'error' not in results[0]:
             return results
         results = _fetch_eastmoney(codes)
+        if results and 'error' not in results[0]:
+            return results
+        if _check_mootdx():
+            results = _fetch_mootdx(codes)
+            if results and 'error' not in results[0]:
+                return results
         return results
 
     fetch_fn = _SOURCE_MAP.get(source, (_fetch_tencent,))[0]
