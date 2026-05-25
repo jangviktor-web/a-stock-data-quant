@@ -1,0 +1,18 @@
+{
+  "name": "a-stock-data-quant",
+  "displayName": "A股量化分析工具箱",
+  "version": "3.2.0",
+  "description": "A股量化分析工具箱 — 20+技术指标 · 7种策略回测 · 形态识别 · 多数据源备份 · 实时行情 · AI金融分析 · 新闻资讯",
+  "author": "jangviktor",
+  "license": "MIT",
+  "category": "data",
+  "tags": ["stock", "quant", "a-share", "backtest", "technical-analysis", "finance", "akshare", "china-stock", "trading", "investment"],
+  "repository": "https://github.com/jangviktor-web/a-stock-data-quant",
+  "homepage": "https://github.com/jangviktor-web/a-stock-data-quant",
+  "agents": ["claude", "cursor", "codex", "gemini", "copilot", "windsurf", "cline", "roo", "opencode"],
+  "platforms": {
+    "skillhub": "https://www.skillhub.club/skills/a-stock-data-quant",
+    "clawhub": "https://clawhub.ai",
+    "claude_code": "https://claude.ai/settings/plugins/submit"
+  }
+}

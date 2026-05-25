@@ -1,6 +1,7 @@
 # a-stock-data-quant
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![SkillHub](https://img.shields.io/badge/SkillHub-Published-purple?logo=datacamp)](https://www.skillhub.club/skills/a-stock-data-quant)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/settings/plugins/submit)
 [![ClawHub](https://img.shields.io/badge/ClawHub-Published-blue?logo=datacamp)](https://clawhub.ai)
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8+-green?logo=python)](https://python.org)
@@ -14,7 +15,7 @@ A股量化分析工具箱 — 技术指标 · 形态识别 · 策略回测 · �
 >
 > AI能力: 东方财富妙想 (免费) + 东财/财联社新闻聚合
 >
-> 平台: [ClawHub](https://clawhub.ai) · [Claude Code](https://claude.ai) · [CherryStudio](https://cherry-ai.com) · [GitHub](https://github.com/jangviktor-web/a-stock-data-quant)
+> 平台: [SkillHub](https://www.skillhub.club/skills/a-stock-data-quant) · [ClawHub](https://clawhub.ai) · [Claude Code](https://claude.ai) · [CherryStudio](https://cherry-ai.com) · [GitHub](https://github.com/jangviktor-web/a-stock-data-quant)
 
 ---
 
@@ -50,7 +51,30 @@ MA/EMA/MACD/RSI/BOLL/KDJ/CCI/ATR/OBV/WR/BIAS/DMI 等 20+ 指标，
 
 ## 安装方式
 
-### 方式一：Claude Code 插件市场（推荐）
+### 方式一：SkillHub（推荐，支持 9+ AI Agent）
+
+```bash
+# Claude Code
+npx @skill-hub/cli install a-stock-data-quant --agent claude
+
+# Cursor
+npx @skill-hub/cli install a-stock-data-quant --agent cursor
+
+# Codex CLI / Gemini / Copilot / Windsurf / Cline / Roo / OpenCode
+npx @skill-hub/cli install a-stock-data-quant --agent <agent>
+```
+
+在线浏览：[skillhub.club/skills/a-stock-data-quant](https://www.skillhub.club/skills/a-stock-data-quant)
+
+### 方式二：ClawHub / OpenClaw
+
+```bash
+clawhub package install a-stock-data-quant
+```
+
+在线浏览：[clawhub.ai](https://clawhub.ai) 搜索 `a-stock-data-quant`
+
+### 方式三：Claude Code 插件市场
 
 ```bash
 # 在 Claude Code CLI 中搜索并安装
@@ -60,28 +84,11 @@ MA/EMA/MACD/RSI/BOLL/KDJ/CCI/ATR/OBV/WR/BIAS/DMI 等 20+ 指标，
 或手动安装：
 
 ```bash
-# 克隆仓库到 Claude Code skills 目录
 cd ~/.claude/skills
 git clone https://github.com/jangviktor-web/a-stock-data-quant.git
 ```
 
-### 方式二：ClawHub / OpenClaw
-
-```bash
-# 通过 ClawHub CLI 安装
-clawhub package install a-stock-data-quant
-```
-
-或搜索浏览：
-
-```bash
-clawhub search stock
-# → a-stock-data-quant: A股量化分析工具箱
-```
-
-在线浏览：[clawhub.ai](https://clawhub.ai) 搜索 `a-stock-data-quant`
-
-### 方式三：CherryStudio 技能
+### 方式四：CherryStudio 技能
 
 1. 打开 CherryStudio → Skills
 2. 搜索 `a-stock-data-quant`
@@ -94,7 +101,7 @@ cd "C:\Users\<用户名>\AppData\Roaming\CherryStudio\Data\Skills"
 git clone https://github.com/jangviktor-web/a-stock-data-quant.git
 ```
 
-### 方式四：直接克隆（独立使用）
+### 方式五：直接克隆（独立使用）
 
 ```bash
 git clone https://github.com/jangviktor-web/a-stock-data-quant.git

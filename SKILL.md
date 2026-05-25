@@ -1,6 +1,12 @@
 ---
 name: a-stock-data-quant
-description: "A股量化分析工具箱。触发词：量化、选股、回测、技术分析、MACD、RSI、KDJ、资金流向、形态识别、实时行情、AI诊断、新闻资讯。用途：技术面分析、多股对比、策略回测、市场扫描、实时报价、AI金融分析、新闻快讯。入口：python3 bin/quant.py <命令> <股票代码>"
+version: "3.2.0"
+description: "A-share stock quantitative analysis toolkit with 20+ technical indicators, 7 backtesting strategies, candlestick pattern recognition, multi-source data fallback, real-time quotes, AI financial analysis, and 7x24 news. Supports Claude Code, Cursor, Codex, Gemini, and 5+ other AI agents."
+keywords: ["stock", "quant", "a-share", "backtest", "technical-analysis", "finance", "akshare", "trading", "investment", "china-stock", "MACD", "RSI", "KDJ", "real-time-quotes", "AI-analysis"]
+author: "jangviktor"
+license: "MIT"
+repository: "https://github.com/jangviktor-web/a-stock-data-quant"
+category: "data"
 allowedTools:
   - Bash
   - Read
@@ -34,8 +40,36 @@ python3 bin/quant.py search 白银                          # 搜索股票
 
 ## 安装
 
+### 方式一：SkillHub (推荐，支持9+ AI Agent)
+
 ```bash
-pip install akshare numpy pandas requests
+# Claude Code
+npx @skill-hub/cli install a-stock-data-quant --agent claude
+
+# Cursor
+npx @skill-hub/cli install a-stock-data-quant --agent cursor
+
+# 其他 Agent (codex/gemini/copilot/windsurf/cline/roo/opencode)
+npx @skill-hub/cli install a-stock-data-quant --agent <agent>
+```
+
+### 方式二：ClawHub
+
+```bash
+clawhub package install a-stock-data-quant
+```
+
+### 方式三：GitHub 直接克隆
+
+```bash
+cd ~/.claude/skills   # Claude Code
+git clone https://github.com/jangviktor-web/a-stock-data-quant.git
+```
+
+### 依赖安装
+
+```bash
+pip install akshare numpy pandas requests mootdx
 # Windows: 用 python 代替 python3
 ```
 
