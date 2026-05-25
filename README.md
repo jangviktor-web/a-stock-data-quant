@@ -1,5 +1,11 @@
 # a-stock-data-quant
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/settings/plugins/submit)
+[![ClawHub](https://img.shields.io/badge/ClawHub-Published-blue?logo=datacamp)](https://clawhub.ai)
+[![Python 3.8+](https://img.shields.io/badge/Python-3.8+-green?logo=python)](https://python.org)
+[![A-Share](https://img.shields.io/badge/A股-量化分析-red)](https://github.com/jangviktor-web/a-stock-data-quant)
+
 A股量化分析工具箱 — 技术指标 · 形态识别 · 策略回测 · 实时行情 · 多数据源备份 · AI金融分析
 
 > 版本: `v3.2.0` | 基于 [akshare](https://github.com/akfamily/akshare) + [MyTT](https://github.com/mpquant/MyTT) 构建
@@ -7,6 +13,8 @@ A股量化分析工具箱 — 技术指标 · 形态识别 · 策略回测 · �
 > 数据源: akshare (主) + 百度财经 + 通达信(mootdx) + 东财数据中心 + 同花顺 + 腾讯 + 东方财富
 >
 > AI能力: 东方财富妙想 (免费) + 东财/财联社新闻聚合
+>
+> 平台: [ClawHub](https://clawhub.ai) · [Claude Code](https://claude.ai) · [CherryStudio](https://cherry-ai.com) · [GitHub](https://github.com/jangviktor-web/a-stock-data-quant)
 
 ---
 
@@ -37,6 +45,63 @@ K线数据: 新浪 → 腾讯 → mootdx → 百度 (四级降级)
 
 MA/EMA/MACD/RSI/BOLL/KDJ/CCI/ATR/OBV/WR/BIAS/DMI 等 20+ 指标，
 支持 buy_hold/ma_cross/macd/rsi/boll/kdj/ensemble 7 种回测策略。
+
+---
+
+## 安装方式
+
+### 方式一：Claude Code 插件市场（推荐）
+
+```bash
+# 在 Claude Code CLI 中搜索并安装
+/install-plugin a-stock-data-quant
+```
+
+或手动安装：
+
+```bash
+# 克隆仓库到 Claude Code skills 目录
+cd ~/.claude/skills
+git clone https://github.com/jangviktor-web/a-stock-data-quant.git
+```
+
+### 方式二：ClawHub / OpenClaw
+
+```bash
+# 通过 ClawHub CLI 安装
+clawhub package install a-stock-data-quant
+```
+
+或搜索浏览：
+
+```bash
+clawhub search stock
+# → a-stock-data-quant: A股量化分析工具箱
+```
+
+在线浏览：[clawhub.ai](https://clawhub.ai) 搜索 `a-stock-data-quant`
+
+### 方式三：CherryStudio 技能
+
+1. 打开 CherryStudio → Skills
+2. 搜索 `a-stock-data-quant`
+3. 点击安装
+
+或手动克隆到 CherryStudio skills 目录：
+
+```bash
+cd "C:\Users\<用户名>\AppData\Roaming\CherryStudio\Data\Skills"
+git clone https://github.com/jangviktor-web/a-stock-data-quant.git
+```
+
+### 方式四：直接克隆（独立使用）
+
+```bash
+git clone https://github.com/jangviktor-web/a-stock-data-quant.git
+cd a-stock-data-quant
+pip install -r requirements.txt
+python bin/quant.py list
+```
 
 ---
 
