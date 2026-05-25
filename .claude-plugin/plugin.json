@@ -1,0 +1,9 @@
+{
+  "name": "a-stock-data-quant",
+  "version": "3.2.0",
+  "description": "A股量化分析工具箱 — 20+技术指标 · 7种策略回测 · 形态识别 · 多数据源备份 · 实时行情 · AI金融分析 · 新闻资讯",
+  "author": "jangviktor",
+  "license": "MIT",
+  "skills": [".."],
+  "commands": []
+}

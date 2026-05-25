@@ -1,0 +1,24 @@
+{
+  "name": "jangviktor-skills",
+  "owner": {
+    "name": "jangviktor",
+    "email": "jangviktor@users.noreply.github.com"
+  },
+  "metadata": {
+    "description": "jangviktor 的 Claude Code 技能市场 — A股量化分析工具箱",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "a-stock-data-quant",
+      "displayName": "A股量化分析工具箱",
+      "description": "A股量化分析工具箱 — 20+技术指标 · 7种策略回测 · 形态识别 · 多数据源备份 · 实时行情 · AI金融分析 · 新闻资讯",
+      "version": "3.2.0",
+      "source": "./",
+      "strict": false,
+      "skills": [".."],
+      "tags": ["stock", "quant", "a-share", "backtest", "technical-analysis", "finance"],
+      "category": "finance"
+    }
+  ]
+}
