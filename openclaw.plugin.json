@@ -1,0 +1,19 @@
+{
+  "name": "a-stock-data-quant",
+  "version": "3.2.0",
+  "description": "A股量化分析工具箱 — 20+技术指标 · 7种策略回测 · 形态识别 · 多数据源备份 · 实时行情 · AI金融分析 · 新闻资讯",
+  "author": "jangviktor",
+  "license": "MIT",
+  "openclaw": {
+    "compat": {
+      "pluginApi": "1.0.0"
+    },
+    "build": {
+      "openclawVersion": "1.0.0"
+    }
+  },
+  "skills": ["./SKILL.md"],
+  "skills_directory": ".",
+  "tags": ["stock", "quant", "a-share", "backtest", "technical-analysis", "finance", "akshare"],
+  "repository": "https://github.com/jangviktor-web/a-stock-data-quant"
+}
