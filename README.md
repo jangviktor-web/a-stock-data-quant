@@ -1,7 +1,7 @@
 # a-stock-data-quant
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![SkillHub](https://img.shields.io/badge/SkillHub-Published-purple?logo=datacamp)](https://skillhub.cn)
+[![SkillHub](https://img.shields.io/badge/SkillHub-Published-purple?logo=datacamp)](https://skillhub.cn/skills/astockdataquant)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/settings/plugins/submit)
 [![ClawHub](https://img.shields.io/badge/ClawHub-Published-blue?logo=datacamp)](https://clawhub.ai/plugins/a-stock-data-quant)
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8+-green?logo=python)](https://python.org)
@@ -15,7 +15,7 @@ A股量化分析工具箱 — 技术指标 · 形态识别 · 策略回测 · �
 >
 > AI能力: 东方财富妙想 (免费) + 东财/财联社新闻聚合
 >
-> 平台: [SkillHub](https://www.skillhub.club/skills/a-stock-data-quant) · [ClawHub](https://clawhub.ai) · [Claude Code](https://claude.ai) · [CherryStudio](https://cherry-ai.com) · [GitHub](https://github.com/jangviktor-web/a-stock-data-quant)
+> 平台: [SkillHub](https://skillhub.cn/skills/astockdataquant) · [ClawHub](https://clawhub.ai) · [Claude Code](https://claude.ai) · [CherryStudio](https://cherry-ai.com) · [GitHub](https://github.com/jangviktor-web/a-stock-data-quant)
 
 ---
 
@@ -53,18 +53,19 @@ MA/EMA/MACD/RSI/BOLL/KDJ/CCI/ATR/OBV/WR/BIAS/DMI 等 20+ 指标，
 
 ### 方式一：SkillHub（推荐，支持 9+ AI Agent）
 
+**第一步：安装 SkillHub CLI**
+
 ```bash
-# Claude Code
-npx @skill-hub/cli install a-stock-data-quant --agent claude
-
-# Cursor
-npx @skill-hub/cli install a-stock-data-quant --agent cursor
-
-# Codex CLI / Gemini / Copilot / Windsurf / Cline / Roo / OpenCode
-npx @skill-hub/cli install a-stock-data-quant --agent <agent>
+curl -fsSL https://skillhub.cn/install/install.sh | bash
 ```
 
-在线浏览：[skillhub.club/skills/a-stock-data-quant](https://www.skillhub.club/skills/a-stock-data-quant)
+**第二步：安装技能**
+
+```bash
+skillhub install astockdataquant
+```
+
+在线浏览：[skillhub.cn/skills/astockdataquant](https://skillhub.cn/skills/astockdataquant)
 
 ### 方式二：ClawHub / OpenClaw
 
