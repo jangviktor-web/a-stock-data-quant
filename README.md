@@ -1,9 +1,9 @@
 # a-stock-data-quant
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![SkillHub](https://img.shields.io/badge/SkillHub-Published-purple?logo=datacamp)](https://www.skillhub.club/skills/a-stock-data-quant)
+[![SkillHub](https://img.shields.io/badge/SkillHub-Published-purple?logo=datacamp)](https://skillhub.cn)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/settings/plugins/submit)
-[![ClawHub](https://img.shields.io/badge/ClawHub-Published-blue?logo=datacamp)](https://clawhub.ai)
+[![ClawHub](https://img.shields.io/badge/ClawHub-Published-blue?logo=datacamp)](https://clawhub.ai/plugins/a-stock-data-quant)
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8+-green?logo=python)](https://python.org)
 [![A-Share](https://img.shields.io/badge/A股-量化分析-red)](https://github.com/jangviktor-web/a-stock-data-quant)
 
