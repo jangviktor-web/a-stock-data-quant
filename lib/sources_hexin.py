@@ -38,7 +38,9 @@ def get_north_flow(symbol='沪股通', days=10):
         f"https://data.hexin.cn/market/hsgtApi/method/dayChart/"
         f"?token=&param={code}&start={start_date}&end={end_date}"
     )
-    r = requests.get(url, headers=_HEADERS, timeout=15, proxies=_PROXIES)
+    s = requests.Session()
+    s.trust_env = False
+    r = s.get(url, headers=_HEADERS, timeout=15)
     data = r.json()
 
     items = data.get(code, []) or []

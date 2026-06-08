@@ -50,8 +50,12 @@ def _with_fallback(primary_fn, *backup_fns):
                     if isinstance(result, list) and len(result) > 0:
                         if isinstance(result[0], dict) and 'error' in result[0]:
                             raise RuntimeError(result[0]['error'])
-                    if isinstance(result, dict) and 'error' in result:
-                        raise RuntimeError(result['error'])
+                    if isinstance(result, dict):
+                        if 'error' in result:
+                            raise RuntimeError(result['error'])
+                        # dict 全部值为空也视为无效结果
+                        if all(not v for v in result.values()):
+                            raise RuntimeError('空结果')
                     return result
             except Exception as e:
                 print(f"  [降级] akshare 不可用({e})，尝试备用源", file=sys.stderr)
@@ -151,15 +155,60 @@ def _ak_north_flow(symbol="沪股通", days=10):
     for _, r in df.tail(days).iterrows():
         net_buy = r.get('当日成交净买额', 0)
         fund_flow = r.get('当日资金流入', 0)
-        if net_buy != net_buy:
+        if net_buy != net_buy:  # NaN check
             net_buy = 0
         if fund_flow != fund_flow:
             fund_flow = 0
+        # 跳过全为 NaN 的行（上游数据缺失）
+        if net_buy == 0 and fund_flow == 0:
+            continue
         rows.append({
             'date': str(r.get('日期', '')),
             'net_buy': float(net_buy),
             'fund_flow': float(fund_flow),
             'leader': str(r.get('领涨股', '')),
+        })
+    return rows
+
+
+def _dc_north_flow(symbol="沪股通", days=10):
+    """东财数据中心 北向资金 (akshare NaN 时的备用源)"""
+    import requests as _req
+    type_map = {'沪股通': '001', '深股通': '002'}
+    mt = type_map.get(symbol, '001')
+
+    url = 'https://datacenter-web.eastmoney.com/api/data/v1/get'
+    params = {
+        'reportName': 'RPT_MUTUAL_DEAL_HISTORY',
+        'columns': 'ALL',
+        'filter': f'(MUTUAL_TYPE="{mt}")',
+        'pageNumber': 1,
+        'pageSize': days,
+        'sortColumns': 'TRADE_DATE',
+        'sortTypes': -1,
+        'source': 'WEB',
+        'client': 'WEB',
+    }
+    s = _req.Session()
+    s.trust_env = False
+    r = s.get(url, params=params, timeout=10)
+    d = r.json()
+    if not d.get('result'):
+        return []
+
+    items = d['result'].get('data', []) or []
+    rows = []
+    for i in items:
+        net = i.get('NET_DEAL_AMT')
+        if net is None:
+            net = 0
+        leader = i.get('LEAD_STOCKS_NAME', '') or ''
+        date_str = (i.get('TRADE_DATE', '') or '')[:10]
+        rows.append({
+            'date': date_str,
+            'net_buy': float(net),
+            'fund_flow': 0,
+            'leader': leader,
         })
     return rows
 
@@ -170,7 +219,7 @@ def _hexin_north_flow(symbol="沪股通", days=10):
     return hexin_nf(symbol=symbol, days=days)
 
 
-@_with_fallback(_ak_north_flow, ('同花顺', _hexin_north_flow))
+@_with_fallback(_ak_north_flow, ('东财数据中心', _dc_north_flow), ('同花顺', _hexin_north_flow))
 def get_north_flow(symbol="沪股通", days=10):
     """
     获取北向资金（沪股通/深股通）历史数据
@@ -991,7 +1040,38 @@ def _ak_market_hotspot(top_n=20):
     return result
 
 
-@_with_fallback(_ak_market_hotspot)
+def _em_direct_hotspot(top_n=20):
+    """东财直接 API 市场热点 (akshare 失败时的备用源)"""
+    import requests as _req
+
+    result = {'hot_ranks': [], 'concept_hot': [], 'industry_hot': []}
+    base = 'https://push2.eastmoney.com/api/qt/clist/get'
+    s = _req.Session()
+    s.trust_env = False
+    common = {'pn': 1, 'np': 1, 'ut': 'bd1d9ddb04089700cf9c27f6f7426281', 'fltt': 2, 'invt': 2}
+
+    # 概念板块
+    try:
+        r = s.get(base, params={**common, 'pz': top_n, 'po': 1, 'fid': 'f3', 'fs': 'm:90+t:3+f:!50', 'fields': 'f2,f3,f4,f12,f14'}, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
+        items = r.json().get('data', {}).get('diff', []) or []
+        for i in items:
+            result['concept_hot'].append({'name': i.get('f14', ''), 'chg_pct': i.get('f3', 0), 'leader': ''})
+    except Exception:
+        pass
+
+    # 行业板块
+    try:
+        r = s.get(base, params={**common, 'pz': top_n, 'po': 1, 'fid': 'f3', 'fs': 'm:90+t:2+f:!50', 'fields': 'f2,f3,f4,f12,f14'}, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
+        items = r.json().get('data', {}).get('diff', []) or []
+        for i in items:
+            result['industry_hot'].append({'name': i.get('f14', ''), 'chg_pct': i.get('f3', 0), 'leader': ''})
+    except Exception:
+        pass
+
+    return result
+
+
+@_with_fallback(_ak_market_hotspot, ('东财直连', _em_direct_hotspot))
 def get_market_hotspot(top_n=20):
     """获取市场热点：人气榜 + 概念板块 + 行业板块"""
     return {'hot_ranks': [], 'concept_hot': [], 'industry_hot': []}

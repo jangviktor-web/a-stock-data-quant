@@ -1243,18 +1243,15 @@ def cmd_hotspot(args):
     else:
         print(f"\n  🏷️  概念板块: 数据暂不可用")
 
-    # 3. 行业板块（已有接口，用 get_sector_hot）
-    try:
-        from lib.akshare_data import get_sector_hot
-        hot_data = get_sector_hot(top_n=10)
-        hot_list = hot_data.get('hot', [])
-        if hot_list:
-            print(f"\n  🏭 行业板块涨幅榜 Top {len(hot_list)}")
-            print(f"  {'板块名称':<16s} {'涨跌%':>7s} {'领涨股':<10s}")
-            print(f"  {'─'*40}")
-            for r in hot_list:
-                print(f"  {r['name']:<16s} {r['chg_pct']:>+6.2f}% {r.get('leader', ''):<10s}")
-    except Exception:
+    # 3. 行业板块
+    industries = result.get('industry_hot', [])
+    if industries:
+        print(f"\n  🏭 行业板块涨幅榜 Top {min(10, len(industries))}")
+        print(f"  {'板块名称':<16s} {'涨跌%':>7s} {'领涨股':<10s}")
+        print(f"  {'─'*40}")
+        for r in industries[:10]:
+            print(f"  {r['name']:<16s} {r['chg_pct']:>+6.2f}% {r.get('leader', ''):<10s}")
+    else:
         print(f"\n  🏭 行业板块: 数据暂不可用")
 
     print(f"\n{'='*70}")
