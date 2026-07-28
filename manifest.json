@@ -1,0 +1,15 @@
+{
+  "name": "a-stock-data-quant",
+  "version": "3.1.0",
+  "description": "A股量化分析工具箱 - 技术指标、形态识别、策略回测、综合诊断、宏观数据、市场热点、HTML图表、数据缓存、实时行情(腾讯/东方财富)、AI金融分析(东方财富妙想)",
+  "author": "merged from mpquant/MyTT, mpquant/Ashare, KlangAlpha/Klang, ScottZt/jin-ce-zhi-suan, johncui9392/Aeolus",
+  "license": "MIT",
+  "changelog": "v2.0.0 - 基于 stock-quant 优化：添加 HTML 图表输出、数据缓存、配置管理、编码修复",
+  "skills": [
+    {
+      "name": "a-stock-data-quant",
+      "description": "A股量化分析",
+      "scripts": ["bin/quant.py"]
+    }
+  ]
+}

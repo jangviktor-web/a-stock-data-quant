@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 缓存和输出
+cache/
+html/
+
+# 含密钥的配置 (用 config.yaml.example 作模板)
+config.yaml
+
+# OS
+.DS_Store
+Thumbs.db
