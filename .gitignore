@@ -7,8 +7,8 @@ __pycache__/
 cache/
 html/
 
-# 含密钥的配置 (用 config.yaml.example 作模板)
-config.yaml
+# 含密钥的配置已加密, 可安全提交
+# config.yaml
 
 # OS
 .DS_Store

@@ -4,7 +4,31 @@
 """
 
 import os
+import base64
 import yaml
+
+# ── 密钥混淆 ──────────────────────────────────────────────
+_XK = b'aSq7x!2026'
+
+def _decrypt(val: str) -> str:
+    """解密 ENC: 前缀的混淆值"""
+    raw = base64.b64decode(val[4:])
+    return bytes([b ^ _XK[i % len(_XK)] for i, b in enumerate(raw)]).decode()
+
+def encrypt(plain: str) -> str:
+    """加密为 ENC: 格式 (用于生成配置)"""
+    data = plain.encode()
+    xored = bytes([b ^ _XK[i % len(_XK)] for i, b in enumerate(data)])
+    return 'ENC:' + base64.b64encode(xored).decode()
+
+def _deobfuscate(config: dict):
+    """自动解密配置中所有 ENC: 前缀的值"""
+    for k, v in config.items():
+        if isinstance(v, str) and v.startswith('ENC:'):
+            try:
+                config[k] = _decrypt(v)
+            except Exception:
+                pass
 
 # ── 默认配置 ──────────────────────────────────────────────
 
@@ -67,6 +91,7 @@ def load_config():
             with open(config_path, 'r', encoding='utf-8') as f:
                 yaml_config = yaml.safe_load(f) or {}
             config.update(yaml_config)
+            _deobfuscate(config)
         except Exception as e:
             print(f"[警告] 读取 config.yaml 失败: {e}，使用默认配置")
 
