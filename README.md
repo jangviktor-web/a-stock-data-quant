@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/icon.webp" alt="a-stock-data-quant" width="220" />
+
 # A股量化分析工具箱
 
 ### A-Share Data Quant
