@@ -10,7 +10,7 @@
 
 <!-- 徽章行 -->
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Version](https://img.shields.io/badge/Version-v3.6.0-ff69b4?style=for-the-badge)](https://github.com/jangviktor-web/a-stock-data-quant/releases)
+[![Version](https://img.shields.io/badge/Version-v3.7.0-ff69b4?style=for-the-badge)](https://github.com/jangviktor-web/a-stock-data-quant/releases)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![A-Share](https://img.shields.io/badge/A股-量化分析-red?style=for-the-badge)](https://github.com/jangviktor-web/a-stock-data-quant)
 
@@ -148,6 +148,33 @@ python bin/quant.py gf-quant 600519,000858
 # 查看所有命令
 python bin/quant.py list
 ```
+
+### 多市场数据层 (bin/cn)
+
+```bash
+# 港股行情 (纯标准库，无 akshare 依赖)
+python bin/cn/equity.py quote 00700                     # 腾讯控股
+python bin/cn/equity.py history 00700 --days 30         # 港股K线
+
+# CN 期货主连
+python bin/cn/futures.py quote cu,au                    # 沪铜/沪金主连
+python bin/cn/futures.py list                           # 全部 18 个别名
+
+# CN 期权 (需 akshare)
+python bin/cn/options.py underlyings                    # ETF + CFFEX 指数期权标的
+python bin/cn/options.py chain 510050 --expiry 202609   # 50ETF 合约链
+
+# CN 宏观 (需 akshare)
+python bin/cn/macro.py cpi / lpr / shibor / treasury-yield
+
+# A股公告事件 (需 akshare)
+python bin/cn/research.py forecast                       # 业绩预告
+python bin/cn/research.py unlock --month 202608          # 限售解禁日历
+python bin/cn/research.py dividend --code 600519         # 分红送转
+python bin/cn/research.py etf-list / cb-list             # ETF/可转债列表
+```
+
+> 价量 / 期货 / 北向等命令为纯标准库实现，无需安装 akshare；研报 / 期权 / 宏观命令需 akshare（`pip install -r requirements.txt` 已包含）。
 
 > Windows 环境用 `python` 代替 `python3`，需要 `PYTHONIOENCODING=utf-8`
 
@@ -695,7 +722,13 @@ PSY   心理线           SAR   抛物线指标
 a-stock-data-quant/
 ├── bin/
 │   ├── quant.py              # CLI 主入口 (2400+ 行)
-│   └── stock_full.py         # 综合分析脚本
+│   ├── stock_full.py         # 综合分析脚本
+│   └── cn/                   # 多市场数据层 CLI（港股/期货/期权/宏观/公告）
+│       ├── equity.py         #   A股+港股行情/历史/搜索/北向/涨跌停/板块 (stdlib)
+│       ├── futures.py        #   18 个 CN 商品期货主连 (stdlib)
+│       ├── research.py       #   A股三表/业绩预告/龙虎榜/解禁/股东/增减持/回购/分红/新股/ETF/可转债 (akshare)
+│       ├── options.py        #   ETF 期权 + CFFEX 指数期权 (akshare)
+│       └── macro.py          #   CN 宏观深度序列 (akshare)
 ├── lib/
 │   ├── akshare_data.py       # akshare 数据层 + 降级链
 │   ├── ashare.py             # 行情数据获取 (含mootdx/百度降级)
@@ -723,6 +756,10 @@ a-stock-data-quant/
 │   ├── stock_notice.py       # 研报/公告/互动易 (东财reportapi/np-anotice/巨潮)
 │   ├── strategies.py         # 策略模块
 │   └── valuation.py          # 个股估值分位 (东财datacenter+百度)
+├── references/
+│   ├── multi-market/        # 多市场数据层字段/路由/源文档
+│   └── research-workflows/   # 研报写作工作流（读年报/可比/深度/快评/纪要/行业/晨会/摘要）
+├── CONNECTORS.md             # 连接器占位符与可选增强说明
 ├── config.yaml.example       # 配置模板 (密钥需自行申请)
 ├── SKILL.md                  # AI Agent skill 文档
 ├── requirements.txt          # Python 依赖
@@ -785,6 +822,43 @@ a-stock-data-quant/
 ---
 
 ## 📝 更新日志
+
+<details open>
+<summary><b>v3.7.0 (2026-08-21) — 多市场数据层 + 研报工作流 + 决策建议</b></summary>
+
+### 新增功能
+
+- **港股数据**：港股实时行情 / K线（东财 / Sina / 腾讯多源），如 `bin/cn/equity.py quote 00700`
+- **CN 期货**：18 个境内商品期货主连行情（SHFE / DCE / CZCE / INE / GFEX），如 `bin/cn/futures.py quote cu,au`
+- **CN 期权**：ETF 期权（50 / 300 / 500 / 科创50ETF）+ CFFEX 指数期权（IO / MO / HO），支持到期月、合约链、PCR 与 IV 汇总，如 `bin/cn/options.py chain 510050 --expiry 202609`
+- **CN 宏观数据**：CPI / PPI / GDP / M0M1M2 / PMI（制造业 / 非制造业 / 财新）/ 社融 / LPR / SHIBOR / 国债收益率 / 工业增加值 / 零售 / 固定资产投资 / 存款准备金率 / 财政，如 `bin/cn/macro.py cpi`
+- **A股公告事件**：业绩预告 / 快报 / 披露计划、龙虎榜（当日 / 个股历史）、大宗交易、限售解禁日历、股东户数、高管增减持、回购实施、分红送转、IPO 日历与中签，如 `bin/cn/research.py unlock --month 202608`
+- **ETF / 可转债**：无需 key 的列表与实时行情，如 `bin/cn/research.py etf-list` / `cb-quote 113050`
+- **研报写作工作流**：读年报（结构化投资备忘录）、可比公司分析（估值倍数矩阵 + 隐含股价）、深度报告、业绩快评、调研纪要、行业研究、晨会纪要、研报摘要（观点分歧矩阵），详见 `references/research-workflows/`
+- **买卖决策工作流**：个股与 ETF 的多指标综合决策——技术 / 估值 / 资金 / 基本面四维诊断 → 买入 / 增持 / 持有 / 减仓 / 卖出 + 置信度 + 核心矛盾点 + 条件化操作框架 + 强制免责声明
+
+### 修复
+
+- **腾讯实时行情**：成交额字段单位错位（万元被当元使用）修正，并补齐成交量 / 成交额返回
+- **腾讯日K**：http 被 302 重定向 → 改用 https 端点
+- **同花顺北向**：适配响应结构变更，避免解析崩溃并给出降级信号
+- **百度K线**：显式识别 403 废弃状态，给出"改用腾讯 / 新浪"的替代提示
+- **裸 6 位代码**：自动补齐市场前缀（`5` 开头识别为上交所 ETF，如 510300 / 518880）
+- **东方财富实时源**：空响应防护 + 自动降级，不再中断整条取数链路
+
+### 优化
+
+- **北向资金**：数据源切换至更稳定的通道，作为原通道的替代
+- **多源自动降级链**：任一源崩溃不中断，逐级回退到下一可用源
+- **惰性依赖**：研报 / 期权 / 宏观脚本对 akshare 采用惰性导入，缺失时仅相关命令提示安装，价量等标准库路径不受影响
+
+### 行为变化
+
+- Python 依赖：akshare 版本要求提升至 `>=1.18.64`
+- 新增独立数据层 CLI：`bin/cn/{equity,futures,research,options,macro}.py`（价量 / 期货 / 北向等为纯标准库实现）
+- 新增 `CONNECTORS.md`：连接器占位符与可选增强说明
+
+</details>
 
 <details open>
 <summary><b>v3.6.0 (2026-07-28) — 广发MCP数据矩阵</b></summary>

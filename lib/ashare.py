@@ -6,7 +6,7 @@ def get_price_day_tx(code, end_date='', count=10, frequency='1d'):     #日线�
     unit='week' if frequency in '1w' else 'month' if frequency in '1M' else 'day'     #判断日线，周线，月线
     if end_date:  end_date=end_date.strftime('%Y-%m-%d') if isinstance(end_date,datetime.date) else end_date.split(' ')[0]
     end_date='' if end_date==datetime.datetime.now().strftime('%Y-%m-%d') else end_date   #如果日期今天就变成空    
-    URL=f'http://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={code},{unit},,{end_date},{count},qfq'     
+    URL=f'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={code},{unit},,{end_date},{count},qfq'     
     st= json.loads(requests.get(URL).content);    ms='qfq'+unit;      stk=st['data'][code]   
     buf=stk[ms] if ms in stk else stk[unit]       #指数返回不是qfqday,是day
     df=pd.DataFrame(buf,columns=['time','open','close','high','low','volume'],dtype='float')     
@@ -17,7 +17,7 @@ def get_price_day_tx(code, end_date='', count=10, frequency='1d'):     #日线�
 def get_price_min_tx(code, end_date=None, count=10, frequency='1d'):    #分钟线获取 
     ts=int(frequency[:-1]) if frequency[:-1].isdigit() else 1           #解析K线周期数
     if end_date: end_date=end_date.strftime('%Y-%m-%d') if isinstance(end_date,datetime.date) else end_date.split(' ')[0]        
-    URL=f'http://ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},m{ts},,{count}' 
+    URL=f'https://ifzq.gtimg.cn/appstock/app/kline/mkline?param={code},m{ts},,{count}' 
     st= json.loads(requests.get(URL).content);       buf=st['data'][code]['m'+str(ts)] 
     df=pd.DataFrame(buf,columns=['time','open','close','high','low','volume','n1','n2'])   
     df=df[['time','open','close','high','low','volume']]    
@@ -49,6 +49,9 @@ def get_price_sina(code, end_date='', count=10, frequency='60m'):    #新浪全�
 def get_price(code, end_date='',count=10, frequency='1d', fields=[]):        #对外暴露只有唯一函数，这样对用户才是最友好的
     xcode= code.replace('.XSHG','').replace('.XSHE','')                      #证券代码编码兼容处理
     xcode='sh'+xcode if ('XSHG' in code)  else  'sz'+xcode  if ('XSHE' in code)  else code
+    # 裸6位代码补齐市场前缀（与 realtime_data 一致：5/6/9 开头=上交所，其余=深交所；ETF 510300/518880 等以此识别）
+    if xcode.isdigit() and len(xcode)==6:
+        xcode = ('sh' if xcode[0] in '569' else 'sz') + xcode
 
     if  frequency in ['1d','1w','1M']:   #1d日线  1w周线  1M月线
          try:    return get_price_sina( xcode, end_date=end_date,count=count,frequency=frequency)   #主力

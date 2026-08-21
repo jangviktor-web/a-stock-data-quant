@@ -55,7 +55,8 @@ def _normalize_code(code):
 
     # 纯数字
     if re.match(r'^\d{6}$', code):
-        prefix = 'SH' if code.startswith(('6', '9')) else 'SZ'
+        # 6/9 开头 = 上交所股票；5 开头 = 上交所 ETF/LOF/债券/基金（如 510300 沪深300ETF、518880 黄金ETF）
+        prefix = 'SH' if code.startswith(('5', '6', '9')) else 'SZ'
         return prefix + code
 
     return code
@@ -119,7 +120,14 @@ def _fetch_tencent(codes):
             low = float(fields[34]) if fields[34] else 0
             change = (now - yesterday) / yesterday * 100 if yesterday else 0
             volume = float(fields[36]) if len(fields) > 36 and fields[36] else 0  # 成交量(手)
-            amount = float(fields[37]) if len(fields) > 37 and fields[37] else 0   # 成交额(元)
+            # 腾讯字段37单位为"万元"，需 ×10000 转元；fields[35] 第三段为精确成交额(元)优先
+            amount = 0.0
+            if len(fields) > 35 and '/' in fields[35]:
+                _seg = fields[35].split('/')
+                if len(_seg) > 2 and _seg[2]:
+                    amount = float(_seg[2])
+            if amount == 0 and len(fields) > 37 and fields[37]:
+                amount = float(fields[37]) * 10000
 
             # 时间字段
             time_str = fields[30] if len(fields) > 30 else ''
@@ -134,6 +142,8 @@ def _fetch_tencent(codes):
                 'high': high,
                 'low': low,
                 'yesterday': yesterday,
+                'volume': volume,
+                'amount': amount,
                 'time': time_str,
             })
         except (ValueError, IndexError):
@@ -195,6 +205,9 @@ def _fetch_eastmoney(codes):
         data = r.json()
     except Exception as e:
         return [{'error': f'东方财富接口失败: {e}'}]
+
+    if not isinstance(data, dict):
+        return [{'error': '东方财富接口返回空或非预期数据(可能网络不可达)'}]
 
     diff = data.get('data', {}).get('diff', {})
     if not diff:
@@ -308,15 +321,21 @@ def get_realtime(codes, source='auto'):
         codes = [c.strip() for c in codes.split(',') if c.strip()]
 
     if source == 'auto':
-        # 优先腾讯 → 东方财富 → mootdx
-        results = _fetch_tencent(codes)
+        # 优先腾讯 → 东方财富 → mootdx；任一源崩溃/返回空都向后降级，不中断整条链
+        def _safe(fn):
+            try:
+                return fn(codes)
+            except Exception as e:
+                return [{'error': f'数据源异常: {e}'}]
+
+        results = _safe(_fetch_tencent)
         if results and 'error' not in results[0]:
             return results
-        results = _fetch_eastmoney(codes)
+        results = _safe(_fetch_eastmoney)
         if results and 'error' not in results[0]:
             return results
         if _check_mootdx():
-            results = _fetch_mootdx(codes)
+            results = _safe(_fetch_mootdx)
             if results and 'error' not in results[0]:
                 return results
         return results

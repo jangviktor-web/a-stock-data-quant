@@ -1,1050 +1,360 @@
 ---
 name: a-stock-data-quant
-version: "3.6.0"
-description: "A-share stock quantitative analysis toolkit with 20+ technical indicators, 7 backtesting strategies, candlestick pattern recognition, multi-source data fallback, real-time quotes, AI financial analysis, 7x24 news, chip distribution, board fund flow, F10 finance, Wallstreetcn news, research reports, and interactive answers. Supports Claude Code, Cursor, Codex, Gemini, and 5+ other AI agents."
-keywords: ["stock", "quant", "a-share", "backtest", "technical-analysis", "finance", "akshare", "trading", "investment", "china-stock", "MACD", "RSI", "KDJ", "real-time-quotes", "AI-analysis"]
-author: "jangviktor"
-license: "MIT"
-repository: "https://github.com/jangviktor-web/a-stock-data-quant"
-category: "data"
-allowedTools:
-  - Bash
-  - Read
-  - Glob
-  - Grep
+agent_created: true
+description: 金融/投资/股票/基金/ETF/板块/指数/宏观/外汇/大宗商品/财报/估值/持仓/交易/仓位/量化/因子/回测/选股/期权/衍生品/投行建模/技术指标/行情监控/预警——内置研究框架（红线/检索策略/数据口径/50+方法论 references/scripts）、A股量化数据引擎（12层数据源·bin/quant.py）、多市场数据层（港股/期货/期权/宏观/公告事件·bin/cn/*.py）与 8 个研报写作工作流（读年报/可比公司/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要·references/research-workflows/）。金融场景总入口，命中任一上述领域即优先加载。
+when_to_use: 金融场景必须使用本 skill，包括但不限于：个股/标的研究、报价/财报/估值、买卖/仓位操作建议、股票代码（A股6位/港股5位/美股ticker）、分析方法论/建模/策略、投行文书；以及需要实际获取 A股/港股数据——实时行情/K线、研报(东财+巨潮)、信号(热点/北向/龙虎榜/解禁/行业)、资金面(融资融券/大宗/股东户数/资金流)、新闻、F10财务三表、公告、互动易、筹码分布、板块资金流、市场温度、估值分位、ETF排行、回测、综合诊断；港股行情、CN期货主连、CN期权(ETF+CFFEX)、CN宏观(CPI/PPI/GDP/M2/PMI/社融/LPR/SHIBOR/国债收益率)、业绩预告/快报/披露计划、解禁/股东户数/增减持/回购/分红/新股/IPO日历、ETF/可转债列表与行情；以及研报写作（读年报/可比公司分析/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要）。
+version: 3.6.0
+license: MIT
+keywords: ["stock","quant","a-share","backtest","technical-analysis","finance","akshare","trading","investment","china-stock","MACD","RSI","KDJ","real-time-quotes","AI-analysis","valuation","dcf","options","macro","etf","fund-flow","research","stock-decision","buy-sell-signal","should-i-buy","etf-decision","should-i-buy-etf","etf-signal","fund","hk","futures","forecast","lhb","dragon-tiger","unlock","insider-trade","buyback","dividend","ipo","annual-report","deep-dive","earnings-review","field-research","industry-study","morning-brief","research-digest","comparable","peers","北向","解禁","增减持","回购","分红","新股","业绩预告","读年报","深度报告","业绩快评","调研纪要","行业研究","晨会纪要","研报摘要","可比公司"]
+allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
 ---
 
-# a-stock-data-quant — A股量化分析工具箱
+# a-stock-data-quant — 金融研究框架 + A股量化数据引擎 + 港股/期货/期权/宏观数据层 + 研报工作流（整合版）
 
-> 技术指标 · 形态识别 · 策略回测 · 实时行情 · 新闻资讯 · AI金融分析（东方财富妙想）
+> 本 skill 为「研究框架 + A股量化数据引擎 + 多市场数据层 + 研报写作工作流」的一体化整合版。
 
-**⚠️ 免责声明**：本工具仅供学习研究，不构成投资建议。技术分析基于历史数据，不预测未来。
+## 路由总览
+- **研究框架 / 红线 / 检索策略 / 数据口径 / 时间口径 / 场景方法论 references / 投行 scripts** → 见下方「整合框架」章节。
+- **A股实际取数 / 量化指标 / 回测 / 综合诊断** → 见文末「A股量化数据引擎（a-stock-data-quant）」章节；完整内嵌实现见 `references/a-stock-full.md`，或运行 `bin/quant.py`。
+- **港股 / 期货 / 期权 / 宏观 / A股公告事件（业绩预告/解禁/股东/增减持/回购/分红/新股/IPO）** → 见「能力路由矩阵」章节，运行 `bin/cn/*.py`。
+- **研报写作工作流（读年报/可比公司/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要）** → 见「研报工作流」章节，工作流细节在 `references/research-workflows/<slug>/`。
 
-**🔄 多数据源**: 主源 akshare 失效时自动降级到备用源（百度/mootdx/datacenter/同花顺），确保数据可用性。
+> 以下「整合框架」章节为本 skill 的红线 / 检索策略 / 数据口径 / 时间口径 / 场景方法论 references 索引 / 投行 scripts 约定；文末补充 A股量化数据引擎。
 
+## 能力路由矩阵（数据域 → 首选实现 → 备用）
+
+| 数据域 | 首选 | 备用 / 说明 |
+|---|---|---|
+| A股实时行情 / K线 | `bin/quant.py realtime\|analyze`（腾讯多源降级） | `bin/cn/equity.py quote\|history`（新浪批量，支持港股） |
+| **港股** 行情 / K线 | `bin/cn/equity.py quote 00700\|history`（东财116.*） | —（wb 引擎为 A股向，港股走 cn） |
+| **期货**（18 主连） | `bin/cn/futures.py quote cu,au\|list` | — |
+| **期权**（ETF+CFFEX 指数期权） | `bin/cn/options.py underlyings\|chain\|pcr` | — |
+| **宏观**（CPI/PPI/GDP/M2/PMI/社融/LPR/SHIBOR/国债收益率） | `bin/cn/macro.py cpi\|lpr\|treasury-yield …` | akshare 深度序列 |
+| 北向资金 | `bin/cn/equity.py northbound`（东财 kamt） | ⚠️ wb `sources_hexin` 响应结构已变、视为 deprecated |
+| 涨跌停 / 行业 / 题材板块 | `bin/quant.py hot-stocks\|hot-boards` | `bin/cn/equity.py limit-up\|limit-down\|industry\|concept` |
+| 龙虎榜 / 大宗交易 | `bin/quant.py capital-flow`（东财 datacenter） | `bin/cn/research.py lhb\|block-trade` |
+| **业绩预告 / 快报 / 披露计划** | `bin/cn/research.py forecast\|flash\|report-calendar` | — |
+| **解禁 / 股东户数 / 增减持 / 回购 / 分红 / 新股 / IPO** | `bin/cn/research.py unlock\|shareholder-count\|insider-trade\|buyback\|dividend\|ipo-calendar` | — |
+| A股三表（IS/BS/CF） | `bin/quant.py fundamentals` | `bin/cn/research.py fundamentals` |
+| ETF / 可转债 列表与行情 | `bin/cn/research.py etf-list\|etf-quote\|cb-list\|cb-quote`（无 key） | 有 GF key 时 `bin/quant.py etf-rank` |
+| 研报写作（读年报/深度/快评/纪要/行业/晨会/摘要/可比） | `references/research-workflows/` 工作流 | 配合 `bin/quant.py` / `bin/cn/*.py` 取数 |
+
+> **去重原则**：同一数据域只走一条链路（首选）；A股核心以引擎层（实测修复+多源降级）为准；多市场数据层补港股/期货/期权/宏观/公告事件等增量域。**不要两条链路都跑。**
+
+## 研报工作流（引用 `references/research-workflows/`）
+
+以下 8 个研报写作工作流是**纯方法论模板**，用户触发后：先按工作流取数（`bin/quant.py` / `bin/cn/*.py`），再按其章节产出成品报告；`{{占位符}}` 与连接器增强见根级 `CONNECTORS.md`。
+
+| 触发 | 工作流目录 | 产出 |
+|---|---|---|
+| 读年报 / 年报分析 | `references/research-workflows/annual-report-reader/` | 结构化投资备忘录（财务+风险扫描+分红） |
+| 可比公司 / 估值对比 | `.../comparable-analysis/` | 估值倍数矩阵 + 估值区间/隐含股价 |
+| 深度报告 / 首次覆盖 | `.../deep-dive-report/` | 券商体例深度研报 |
+| 业绩快评 / 业绩点评 | `.../earnings-review/` | 业绩点评（超/低预期判断） |
+| 调研纪要 / 纪要整理 | `.../field-research-notes/` | 标准化调研纪要 |
+| 行业研究 / 行业报告 | `.../industry-research/` | 行业全景报告 |
+| 晨会纪要 / 晨会材料 | `.../morning-briefing/` | 晨会汇报材料 |
+| 研报摘要 / 研报对比 | `.../research-digest/` | 研报要点 + 观点分歧矩阵 |
+
+## 触发顺序硬约束
+- 必须**先**加载本 skill 的红线与路由规范，任何涉及金融市场数据的请求，**都要**调用数据接口 / 检索工具获取数据；**禁止跳过本 skill 直接裸答或者凭记忆回答。**
+
+## 红线（金融场景一票否决）
+
+- **禁止编造数据**：不虚构数据/事件/公司名/财务数字；数据源缺失时直接说明"当前数据源未覆盖 / 需进一步核实"，不要编一组数据再加"待核实"标签；引用不确定的研报/论文时标"该引用需核实原文"
+- **禁止核心概念混淆**：客户 vs 竞争对手、整机厂 vs 零部件厂、净利润 vs 归母净利润、同比 vs 环比、财年 vs 自然年；不确定时用"据我理解"前缀并请用户确认
+- **禁止数据自相矛盾**：同一回答内数据与结论必须一致；多组数据先交叉校验；数据源冲突时优先采信高层级来源（交易所、公司公告、年报）并显式标注分歧
+- **强制免责声明**：所有包含具体投资建议、操作价位、买卖判断、仓位调整建议的输出，必须在回复末尾附加以下免责声明模板（固定文案，禁止模型自行改写、缩减或省略）：
+
+  > **免责声明**：以上内容基于公开数据和量化分析，仅供参考，不构成投资建议。市场有风险，投资需谨慎。任何投资决策应结合个人风险承受能力、资金状况和投资目标独立判断，必要时咨询持牌专业机构。过往表现不预示未来收益。
+
+## 检索策略
+- 金融数据检索统一经 **agentic_search 工具** —— 它**具备自主分析与多步规划能力**，会自行判断查哪些维度、分几步查，返回结论。
+- **委派 query 必须是"一句话检索意图"，保留用户原始意图，禁止拆成多维度清单 / 字段列表 / 表格格式要求**。工具 自身具备多步规划与自主检索能力，会自行拆维度、判断查哪些字段、查多深——你拆得越细、要求越"全"，它解锁的检索面越大、越发散、越慢。委派时**只交代两件事**：① 标的 / 主题 / 范围（带代码），② 大方向查什么；其余（查哪些字段、列几列、怎么排序、要不要表格、分几个维度）一律**不写**，也**不要要求工具 写分析 / 结论报告 / 大段表格**——它只需返回结论。字段筛选、表格化、排序、深度分析都是拿回数据后**主 agent 自己的活**（见第 4/7 条），不是委派 query 的内容。
+- **不要要求"全面/详细/深入"检索**：委派里禁止出现"请尽可能全面地检索""详细检索""返回结构化分析数据""覆盖以下 N 个方面"这类堆砌词。检索广度与深浅由工具 按问题体量自己定，主 agent 说得越"全""细"它越发散、越慢，反而不利。就给它一句朴素的检索意图即可。
+    - 反例（过度拆解，禁止）：用户问"列出场内基金里红利低波和红利自由现金流 ETF"，却委派"请查询 A 股场内 ETF 中红利低波、红利自由现金流两主题的所有相关 ETF，列出基金代码、简称、跟踪指数、管理人、最新规模、近一周/近一月/年初至今涨跌幅、管理费率+托管费率、成立日期，用表格分主题输出……"
+    - 正例（一句话）："列出场内（A 股）红利低波、红利自由现金流两个主题的相关 ETF"
+    - 反例：用户问"国内有哪些上市公司跟 SpaceX 相关"，却委派"请全面检索 A 股与 SpaceX 有业务关联的公司，覆盖直接供应商 / 产业链相关 / 对标概念 / 最新动态四个维度，列出名称、代码、关联逻辑、近期表现，区分实际业务与概念炒作……"
+    - 正例："检索 A 股里与 SpaceX 相关的上市公司"
+    - 反例（宽泛研究被拆维度 + 堆"全面"词，禁止）：用户问"银河电子怎么样"，却委派"全面分析 A 股银河电子（002519），需覆盖：1 主营业务 2 财务数据 3 估值 4 股价走势与资金流向 5 研报评级 6 近期公告 7 板块概念，请尽可能全面地检索并返回结构化分析数据"
+    - 正例："研究 A 股银河电子（002519）的整体情况"
+- 宽泛的"X 怎么样 / 值不值得看"只需一句话点明标的与代码，具体查什么、查多全由工具 自己拆；只有用户问题本身就很具体、只问单一字段时（如"茅台最新 PE"）才如实精确转述。
+- 工具无法满足时，用 WebSearch 检索公开信息，明确告知用户数据来源并说明非实时性。
+
+## 数据底线
+
+- **前提显式**：问操作类问题（买/卖/加仓/减仓/换股）时，先列前提（市场环境 + 用户风险偏好 + 资金量/期限），再给"条件 → 操作 → 风险提示"。前提缺失时主动追问而非直接给操作建议
+- **检索优先于记忆**：提及具体股票/基金/指数/宏观指标时，先调 agentic_search；如通达信 MCP 可用，按MCP场景说明调用拉数据，禁止纯凭记忆作答；记忆中的数字只能作为合理性 sanity check，不能作为答案
+- **禁止硬编码数据**：所有行情、财务、宏观和技术指标必须通过工具动态获取并标注来源和时点，禁止在回答中直接引用训练数据中的历史数值或凭记忆输出数字
+- **时效意图与目标周期解析**：用户表达“最新、当前、今天、今年、近期”等时效要求时，先结合运行时日期、市场交易状态、指标发布频率和数据发布时间确定目标周期，不得把当前年份直接等同于最新有效数据周期。用户明确指定历史日期、年份、季度、财年或回测时点时，以用户指定范围为准，不得自动改写为当前周期。
+
+- **查询结果时效校验**：数据返回后核对其统计周期、发布时间和数据截止时间是否满足用户要求：
+  1. 数据已覆盖目标周期时，按实际周期使用并标注时点；
+  2. 当前周期尚未发布时，使用最近已发布周期，并明确说明数据截止时间；
+  3. 返回数据明显早于目标周期时，调整时间参数或更换数据源重新查询；
+  4. 仍无法取得满足要求的数据时，明确声明数据缺口和最近可用时点，不得将历史数据表述为当前数据。
+- **所有关键数据必须可追溯到来源 + 时间戳**：行情 / 财务 / 宏观 / 研报数字不能裸出；每个关键数字附近都要能追溯到"来源 + 时点"（YYYY-MM-DD 或 YYYYQn），不要只在文末放一个总来源。同一数据块共享相同来源、周期和口径时，可在表头、表尾或图注统一标注，来源或周期不同时，再分别标注。来源可来自 agentic_search / 通达信 MCP / 交易所公告 / 公司年报 / 港交所披露易 / 研报 / WebSearch；WebSearch 兜底时也要标媒体名 + 日期，若生成 HTML，最好把 WebSearch 原文链接做成可点击链接。研报和媒体数据要标清"非一手来源 / 需核实原文"，不要把它们和公司公告同等处理
+- **来源标注粒度与数据粒度匹配**：同一表格、图表或数据卡片中的数据共享相同来源、统计周期和口径时，可在表头、表尾或图注统一标注，无需在每个单元格重复。只有不同子项来源、时点或计算口径不同时，才需要分别标注。任何关键结论都应能追溯到对应的数据来源和时点。
+- **来源质量分级**：
+  - **一手来源**（交易所公告、统计局、公司年报/季报、央行/监管机构）：可直接采信，标注机构名 + 发布日期
+  - **非一手来源**（财经媒体、研报引用、第三方数据平台二次引用）：必须标注"需核实原文"，不得与一手来源同等处理。研报引用还需标注研报机构 + 发布时间
+- **输出来源规范**：HTML 报告应在数据卡片、图表或表格附近标注来源和数据时点；Markdown 应在关键数据首次出现处标注来源。共享来源的数据可合并标注，避免重复信息影响可读性。
+
+## 使用指南
+
+1. **识别意图**：先分清这是"取数据"（→ 委派 agentic_search 工具）还是"给方法论 / 分析 / 输出"（→ 读对应 reference、跑 scripts）；很多请求两者都要（先取数再分析）
+2. **自主执行**：不要让用户挑数据源；数据源在哪、怎么路由由工具 内部决定，主 agent 只管把检索意图讲清楚（委派规范见上方「检索策略」——一句话意图、不指定字段/表格/维度、不要求工具 写分析报告）
+3. **错误兜底**：工具 返回缺失或报错时，换个问法再调用，或用通达信 MCP（如可用）/ WebSearch 补
+4. **清晰呈现**：用中文表头的可读表格展示返回结果。列举 / 排名 / 对比多个标的时，交付前过三道规整校验：
+    - **每个标的必带标准格式代码**：A 股 6 位（600519）、港股 5 位（00700）、美股 ticker（AAPL），逐个标注、无一例外，不要只在第一个标的后给代码
+    - **排序 / 分层必须给可量化依据**：给标的排序或分档时，写清排序所依据的具体指标（市占率 / 供应份额 / 营收占比 / 资金流入 / 增速 / 估值分位），不要用"绑定深度""市场地位""重要性"这类笼统词；确实拿不到量化指标时，说明这是定性排序，不要伪装成硬排名
+    - **条件校验**：题目限定了范围（市场 A 股 / 港股 / 美股、上市状态、产品类型）时，逐个核对候选标的是否满足，剔除不符的；A 股清单里混入港股或未上市标的是硬错误
+5. **按需组合**：复杂请求可多次委派工具 互补（如先让工具 选出股票池，再对池内标的逐只查详情），或在一次委派里把多步需求讲清让工具 自主完成
+6. **置信度分层**：高置信度直接断言；中等用"倾向于 / 大概率"；低用"不排除 / 有可能"。不要把所有可能性平铺让用户自选
+7. **除非用户指定格式，结果尽可能用 HTML 可视化呈现**：分析、对比、研报型回答尽量产出 HTML 文件（用 `Write` 落地 HTML，对话里把文件路径告诉用户）；简短 Q&A、单数字查询、Yes-No 判断仍用 Markdown。HTML 用浅底深字研报风、首屏结论先行；数据图用 ECharts、关系拓扑图用 SVG/CSS、查阅型用表格。**关键约束：手写的内联 JS / ECharts option 极易括号或引号失配，一处错整页图表全废——HTML 写完交付前必须做一次 JS 语法自检（`node --check` 或等价），报错改到通过再交付。** 复杂图优先套用现成 option 骨架填 data，不要从零手敲嵌套结构。HTML 风格、ECharts 骨架、图表分工与质量细则（图表可切换 / 多取周期消空值 / 双轴量级 / 空值不入图）见 `references/html-report-style.md`，产出 HTML 前先读它。
+8. 🔴 **CHECKPOINT · 加载后必须匹配 reference**：进入本 skill 后，必须完成以下三步，**不要只读 SKILL.md 主文件就直接答**——主文件只讲红线和路由，具体方法论（步骤、阈值、避坑）都在对应 reference 里。三步未走完不得输出分析结论。
+
+   **第一步：问题拆解为场景标签**
+   把用户问题拆成一个或多个场景标签。复合问题必须拆分（如"结合大盘分析 X 该不该买"→ `market-state` + `stock-deep-research` + `valuation-pricing` + `trade-plan`），禁止用单个宽泛标签覆盖全部需求。
+
+   **第二步：核心方法论加载**
+   每个主场景必须加载对应的核心 reference；存在多个主场景时分别加载。核心 reference 加载完成后，根据问题中的具体维度追加补充 reference。Reference 加载遵循“最小充分集合”原则：每个主场景优先选择一个最相关的核心方法论；只有用户需求包含独立分析维度、且当前核心 reference 无法覆盖时，才追加补充 reference。不设置机械固定上限，但禁止为了完成清单无边界加载无关文件。判断依据是方法论是否实际用于分析，而不是读取文件数量。
+
+   问题场景与核心必选 / 条件追加对照：
+
+   | 问题场景 | 核心必选 | 条件追加 | 质量底线 |
+   |---|---|---|---|
+   | 市场展望 / 大盘 | `market-state` + `macro-transmission` | 主线研判加 `market-mainline`；板块轮动加 `sector-comparison` | 不能只做指数涨跌描述 |
+   | 个股全面分析 | `stock-deep-research` + `valuation-pricing` | 按问题加 `business-model` / `quality-growth` / `peer-comparison` / `industry-chain` | "全面"不能只加载个股初探 |
+   | 技术指标 / 形态 | `price-action-tools` | 仅突破、VCP、波缩、真假突破时加 `breakout-patterns` | MACD/RSI 查询不强制加载 VCP |
+   | 红利 / 分红 / 回购 | `dividend-buyback` | 估值性价比加 `valuation-pricing`；现金质量加 `quality-growth` | 不能以单次股息率代替持续性验证 |
+   | 政策 / 题材 / 热点 | `policy-impact` | 市场主线加 `market-mainline`；产业映射加 `industry-chain` | 必须给出政策→行业→公司传导链 |
+   | 订单 / 合同负债 / 前瞻指标 | `earnings-preview` + `quality-growth` | 收入模式加 `business-model`；涉及定价兑现才加 `valuation-pricing` | 不能把所有经营前瞻指标机械路由到估值 |
+
+   **第三步：自检（输出前必须通过）**
+   - 每个主场景是否都有核心方法论 reference？
+   - 数据源是否按路由表选择，且降级原因合理？
+   - 用户要求的关键分析维度是否均已覆盖？
+   - 方法论是否实际体现在答案中，而不是只完成文件读取？
+   - 每个关键数据是否能对应到来源、时点和口径；
+     不同来源/周期的子项是否分别标注？
+   - 是否包含具体买卖、价位或仓位建议；
+     若包含，固定免责声明是否完整位于回复末尾？
+   - 若存在缺失，继续补充、重新查询或明确缩小回答范围，
+     禁止假装完成全面分析。
+
+   `html-report-style.md` **只负责输出格式，必须在方法论匹配完成后加载，不能替代任何方法论 reference。** 禁止仅加载格式类、工具类或数据源类 reference 就直接输出分析结论。
+9. **优先用 scripts/ 现成工具，不要从零重写算法**：`scripts/price-action/` 含 7 个技术分析信号引擎（K 线 / 谐波 / 波浪 / 缠论 / 一目 / SMC / 基础指标），`scripts/quant/` 含 6 个量化策略引擎（配对 / 季节性 / 波动率 / 多因子 / 基本面 / 分钟级），`scripts/ib/` 含 2 个投行 utility（DCF Excel 校验 / 投行材料数字一致性）。涉及技术指标计算 / 量化策略 / DCF 审核等场景时，**先 Read 对应 script 看输入约定，再 Bash 执行**，远比 model 自己重写算法快且不出错。具体工具清单见对应 reference 末尾的"可执行工具"section
+10. **多角度深度挖掘（数据返回后必跑反思）**：拿到工具数据不是答题终点而是挖掘起点。每次数据返回后过 5 维，任一维度触发新线索 → 继续检索；五维都无增量才收尾。**不为凑深度硬造，但也不要拿到一条数据就收尾**
+    - ① **纵向**再追一个"为什么"：查到"净利润下滑"→ 继续拆成本 / 收入结构
+    - ② **横向**看上下游 / 竞对：查到"比亚迪毛利走低"→ 顺查赛力斯 / 理想看是不是行业性
+    - ③ **时间**放到 3-5 年周期看分位：查到"PE 25×"→ 调 5 年 PE 带看历史分位是高是低
+    - ④ **反面**找最薄弱假设：依赖"消费复苏"→ 主动查社零 / CPI 反驳信号
+    - ⑤ **行动**给条件化决策：补"若 X 跌破 Y 则 ……"，让用户拿到可操作框架
+11. **有观点 + 反向声音**：分析类回答必须给经过推演的判断（不是平铺 N 种可能让用户自选）；主动点出"市场普遍知道什么、还没充分定价什么"，必要时给反向声音（"这个加仓决定可能基于一个错误的归因 —— X 的上涨其实是 Y 引起的"），不要顺着用户思路一路点头
+
+## 时间口径（跨时区/跨市场必查）
+
+金融数据强时效，回答时遵守以下规则：
+
+- **先判断交易状态**：回答"现价/最新/今天"前，先确认是不是该市场交易时段；不在时段内必须标注"盘前/盘中/盘后/休市"和对应的最近一次 close
+- **美股时间先核对 DST**：美国夏令时期间美股开盘对应北京 21:30，冬令时对应 22:30；每次按当前日期推导，不要硬记切换日
+- **事件时点本地+北京双标**：财报、央行决议、经济数据等事件，同时给本地时间和北京时间，并标注盘前还是盘后。例：苹果 FY25Q1 财报 = 2025-01-30 美东盘后 16:30（北京时间 2025-01-31 05:30）
+- **相对时间默认北京时区**：用户说"今天/昨天/本周"按北京时间解释；有歧义时（如"昨天美股"）第一句先点明绝对日期
+- **跨市场比较先对齐窗口**：A股 T 日收盘 / 港股 T 日收盘 / 美股 T-1 夜盘 / 美股 T 日盘 不是同一时点；做联动分析时点明用的是哪种对齐
+- **跨市场财报同期对比按自然年季度对齐**：FY 标号本身不能直接对（如腾讯 FY26Q1 = 自然年 2026Q1，阿里 FY26Q1 = 自然年 2025Q2，对不上）。先把每家 FY 拆成它实际覆盖的自然年季度（腾讯 FY = 自然年；阿里 FY 4 月制；苹果 FY 9 月底制；微软 FY 7 月制），再按"自然年同季度"配对做季度比，或用 **TTM 滚动 4 季** 做年度比——TTM 本身就是按自然年季度滚动求和，自动消除 FY 定义差异。详细步骤与币种 / 估值口径一致性见 `references/peer-comparison.md` 与 `references/valuation-pricing.md`
+
+## 数据口径与标的核对
+
+- **先核对标的身份**：公司名、港股代码、美股代码、ADR、ETF、同名公司必须先确认，避免把不同上市主体、ADR、本地股、ETF 或同名公司混用
+- **香港产品先确认类型**：港股 `7709.HK` 这类代码可能是 ETF、杠杆产品、牛熊证或结构化产品；查 NAV 前必须先确认产品类型。对香港 ETF/杠杆产品，优先搜索基金管理人、HKEX、etnet/基金专页
+- **多源交叉验证**：同一指标不同数据源给出不同数值时，至少列两个来源，优先采信交易所/公司公告/年报等一手来源，并显式说明分歧；不要静默选一个高于另一个的版本作为答案
+
+## 场景方法论 references
+
+`references/` 目录下是按场景蒸馏的金融分析方法论，覆盖个股研究、估值、财报事件、交易决策、板块主线、资金机构、宏观传导、技术分析、量化策略、衍生品、跨资产、危机周期、投行建模、日常 routine 以及 HTML 输出规范等。**当用户的请求落入对应场景时，先读取相应 reference 再作答。**
+
+**使用规则**：
+- 每条 reference 是"方法论 + 量化阈值 + 避坑"三段式，不是输出模板——分析时按其框架思考，但**不照抄章节标题或字数限制**
+- 多场景叠加时（如"分析 A 股票该不该买"同时涉及个股研究 + 估值 + 仓位决策），并行读取多个 reference 综合判断
+- 方法论类 references 只管"分析框架"，**数据获取走 agentic_search 工具 / 通达信 MCP（如可用）**
+
+**索引（按场景类别分组）**：
+
+**数据源调用**
+- `tdx-mcp-quick-reference.md` 通达信 MCP 调用速查（10 个工具实测示例、fixedTag 路由表、避坑清单、已知限制）—— 仅在用户装了通达信 MCP 时使用
+
+**个股研究**
+- `stock-first-look.md` 个股初探（含热门股快读）
+- `stock-deep-research.md` 个股深度研究（投资逻辑研究）
+- `business-model.md` 业务模式拆解
+- `valuation-pricing.md` 估值与定价（PE/PB/DCF/PEG/分部估值）
+- `moat-quality.md` 护城河与公司质地
+- `management-assessment.md` 管理层体检
+- `peer-comparison.md` 同业比选
+- `quality-growth.md` 质量增长匹配（高质复利 / 增长质检 / 价值股息）
+
+**财报与事件**
+- `earnings-preview.md` 财报前瞻
+- `earnings-review.md` 财报后反应（业绩会提炼 / 财后漂移）
+- `announcement-impact.md` 公告影响与股东信解读
+- `event-catalyst.md` 事件驱动短线催化
+
+**交易与持仓**
+- `trade-plan.md` 交易计划与买卖点
+- `position-sizing.md` 仓位决策与加减仓
+- `portfolio-checkup.md` 持仓体检与风控
+- `stop-discipline.md` 止损纪律
+- `monitor-alert.md` 监控告警与停复牌
+
+**板块主线题材**
+- `sector-comparison.md` 板块比较与轮动
+- `market-mainline.md` 市场主线与情绪
+- `market-state.md` 市场状态与广度
+- `theme-lifecycle.md` 题材周期与龙头
+- `leader-game.md` 涨停龙头博弈与龙虎榜
+
+**资金与机构**
+- `fund-flow.md` 资金流与北向
+- `institutional-holding.md` 机构持仓与拥挤度
+
+**宏观/政策/产业链**
+- `macro-transmission.md` 宏观行业个股传导
+- `policy-impact.md` 政策解读与受益映射
+- `industry-chain.md` 产业链映射与卡点
+
+**技术分析**
+- `breakout-patterns.md` 波缩突破与 VCP
+- `price-action-tools.md` 技术指标与形态识别（K 线 / 谐波 / 波浪 / 缠论 / 一目 / SMC）
+- `abnormal-detection.md` 放量异动与跳空归因
+
+**风险与量化**
+- `risk-stress.md` 风险压力测试（VaR / CVaR / 蒙特卡洛）
+- `quant-factor-research.md` 因子研究框架
+- `systematic-strategies.md` 量化策略库（配对 / 事件驱动 / 季节性 / ML / 对冲 / 波动率）
+- `portfolio-optimization.md` 资产配置与组合优化
+
+**衍生品与跨资产**
+- `options-strategies.md` 期权策略（多腿组合 + Greeks）
+- `fixed-income.md` 固定收益与可转债
+- `forex-commodity.md` 外汇与大宗商品
+- `crypto-derivatives.md` 加密衍生品（仅在用户明确要求时使用）
+
+**主题**
+- `dividend-buyback.md` 分红回购与股东回报
+- `going-global.md` 出海链投资
+- `crisis-event.md` 危机 / 反转 / 周期拐点
+
+**投行建模**
+- `ib-models.md` 投行估值建模（DCF / LBO / comps / 三表 / M&A / Unit Economics）
+- `ib-deal-prep.md` 投行交易准备（尽调 / 投委会 / IM / pitch / NDA）
+
+**日常 routine**
+- `daily-briefing.md` 每日投研简报（盘前 / 收盘 / 晨会）
+
+**输出规范**
+- `html-report-style.md` HTML 研报输出（JS 自检 / ECharts 骨架 / 图表分工与质量细则）——产出 HTML 前先读
+
+## 通达信 MCP（如可用）
+**仅在用户环境装了通达信 MCP 时启用**——通过列出的 MCP 工具是否包含 `tdx_quotes` / `tdx_kline` / `tdx_api_data` / `tdx_indicator_select` / `tdx_screener` / `tdx_lookup_stock` / `wenda_news_query` / `wenda_notice_query` / `wenda_report_query` / `wenda_macro_query` 来判断。可用时优先在以下场景调用：
+
+- 上面没覆盖或返回不全的细分接口（深度财务三表多期、十大流通股东全历史、限售解禁、股本变动、港股财报多期回溯、个股 / 全市场龙虎榜结构化、自然语言条件选股、宏观时序数据）
+- 需要按通达信特有路由（`entry` + `fixedTag` + `code`）取结构化字段，而不是 LLM 描述
+- 验证上面给出数据是否准确（多源交叉验证）
+
+**调用前先读 references/tdx-mcp-quick-reference.md** —— 里面是 10 个工具的实测调用示例、参数含义、fixedTag 路由表、错误排查方法、已知限制。**不要凭记忆拼参数**（setcode、target、fixedTag 都有踩坑点）。
 ---
 
-## TL;DR
-
-```bash
-python3 bin/quant.py analyze sh600519                    # 综合分析
-python3 bin/quant.py compare sh600519,sz000858           # 多股对比
-python3 bin/quant.py backtest sh510500 --strategy ensemble --html  # 回测+图表
-python3 bin/quant.py realtime sh600519,sz000858          # 实时行情
-python3 bin/quant.py market-temp                         # 市场温度计
-python3 bin/quant.py valuation 600519                  # 估值分位
-python3 bin/quant.py hot-stocks --mode turnover          # 热门股票排行
-python3 bin/quant.py hot-boards --mode gainers           # 热门板块排行
-python3 bin/quant.py board-stocks BK0892                 # 板块成分股
-python3 bin/quant.py capital-flow 600519               # 资金流向细分
-python3 bin/quant.py fundamentals 600519                 # 基本面快照
-python3 bin/quant.py news                                # 新闻快讯
-python3 bin/quant.py em-diagnose sh600519                # AI诊断
-python3 bin/quant.py search 白银                          # 搜索股票
-python3 bin/quant.py chip sh600519                       # 筹码分布
-python3 bin/quant.py board-flow --type concept           # 概念板块资金流
-python3 bin/quant.py finance 600519                      # F10财务指标
-python3 bin/quant.py wscn --channel a-stock-channel      # 华尔街见闻A股快讯
-python3 bin/quant.py report 600519                       # 个股研报
-python3 bin/quant.py notice 600519                       # 上市公司公告
-python3 bin/quant.py interactive 茅台                     # 互动易数据
-python3 bin/quant.py etf-rank --type gainers             # ETF排行榜 (GF MCP)
-python3 bin/quant.py lhb-gf                              # 龙虎榜深度分析 (GF MCP)
-python3 bin/quant.py index-val --top 10                    # 指数估值分位 (GF MCP)
-python3 bin/quant.py gf-quant 600519,000858              # 广发财务对比 (GF MCP)
-# GF MCP数据源: ETF排行/龙虎榜/指数估值/财务对比
-```
-
----
-
-## 安装
-
-### 方式一：SkillHub (推荐，支持9+ AI Agent)
-
-```bash
-# Claude Code
-npx @skill-hub/cli install a-stock-data-quant --agent claude
-
-# Cursor
-npx @skill-hub/cli install a-stock-data-quant --agent cursor
-
-# 其他 Agent (codex/gemini/copilot/windsurf/cline/roo/opencode)
-npx @skill-hub/cli install a-stock-data-quant --agent <agent>
-```
-
-### 方式二：ClawHub
-
-```bash
-clawhub package install a-stock-data-quant
-```
-
-### 方式三：GitHub 直接克隆
-
-```bash
-cd ~/.claude/skills   # Claude Code
-git clone https://github.com/jangviktor-web/a-stock-data-quant.git
-```
-
-### 依赖安装
-
-```bash
-pip install akshare numpy pandas requests mootdx
-# Windows: 用 python 代替 python3
-```
-
----
-
-## 决策树
-
-```
-用户问了什么？
-│
-├─ "分析某只股票" ──────────→ analyze
-├─ "哪只股票更强" ──────────→ compare
-├─ "回测某个策略" ──────────→ backtest
-├─ "今天市场有什么信号" ────→ scan
-├─ "RSI/MACD/均线多少" ────→ indicators
-├─ "有没有W底/形态" ──────→ pattern
-├─ "主力资金怎么样" ──────→ fund
-├─ "现在价格多少" ─────────→ realtime
-├─ "搜一下XX股票" ─────────→ search
-├─ "帮我诊断一下" ─────────→ diagnose
-├─ "AI分析/AI选股" ────────→ em-diagnose / em-pick
-├─ "AI问答/AI资讯" ────────→ em-ask / em-news
-├─ "AI基金分析" ───────────→ em-fund
-├─ "宏观数据(CPI/GDP)" ───→ macro
-├─ "市场热点" ─────────────→ hotspot
-├─ "市场情绪/涨停/跌停" ──→ market
-├─ "市场温度/贪婪恐惧" ──→ market-temp
-├─ "热门股票/板块排行" ──→ hot-stocks / hot-boards
-├─ "板块成分股" ─────────→ board-stocks
-├─ "资金流向/主力" ──────→ capital-flow
-├─ "基本面/PE/PB" ───────→ fundamentals
-├─ "估值分位/PE高低" ────→ valuation
-├─ "个股深度/股东/解禁" ──→ info
-├─ "筹码分布/成本" ──────→ chip
-├─ "板块资金流/概念资金" ─→ board-flow
-├─ "财务指标/ROE/营收" ──→ finance
-├─ "华尔街见闻/全球快讯" ─→ wscn
-├─ "研报/机构评级" ──────→ report
-├─ "公告/上市公司公告" ──→ notice
-├─ "互动易/投资者问答" ──→ interactive
-├─ "ETF排行/涨跌榜" ──→ etf-rank
-├─ "龙虎榜/游资/营业部" → lhb-gf
-├─ "指数估值/PE分位" ──→ index-val
-├─ "财务对比/广发F10" ─→ gf-quant
-├─ "缓存管理" ─────────────→ cache
-├─ "新闻/快讯/资讯" ────────→ news
-└─ "有哪些功能" ───────────→ list
-```
-
----
-
-## 检查点
-
-### 🔴 CHECKPOINT A：执行前确认
-- 确认代码（"茅台"→ sh600519）、参数（周期、策略、资金量）
-- 🛑 STOP：用户说"不用了"/"只看看" → 展示命令+示例，**不执行**
-- 🛑 STOP：回测含 `--capital`/`--stop-loss` → 确认资金量和止损比例后再执行
-
-### 🔴 CHECKPOINT B：结果解读
-- 一句话总结 + 关键数值引用 + 后续建议
-- 🛑 STOP：数据不足（<30条K线）→ 提示"数据量不足，结论仅供参考"
-
-### 🔴 CHECKPOINT C：投资建议前
-- 🛑 STOP：涉及买卖信号 → **必须**声明"技术分析仅供参考，不构成投资建议"
-- 🛑 STOP：单指标触发 → 至少2个维度交叉验证后才可给出方向性结论
-
----
-
-## 股票代码
-
-| 市场 | 格式 | 示例 |
-|------|------|------|
-| 沪市 | `sh` + 6位 | `sh600519`(茅台)、`sh000001`(上证指数)、`sh510500`(中证500ETF) |
-| 深市 | `sz` + 6位 | `sz000858`(五粮液)、`sz399006`(创业板指) |
-
-> 不知道代码？→ `python3 bin/quant.py search 茅台`
-
----
-
-## 核心命令
-
-### analyze — 综合分析（推荐入口）
-
-行情 + 指标 + 形态 + 策略信号 + 回测，一次出完整报告。
-
-```bash
-python3 bin/quant.py analyze sh600519                        # 默认日线
-python3 bin/quant.py analyze sh600519 --period 1w --count 500  # 周线500根
-python3 bin/quant.py analyze sh600519 --html                  # 生成HTML图表
-```
-
-**解读速查**：
-
-| 看到 | 意味着 | 建议 |
-|------|--------|------|
-| MA5偏离>2% | 短期涨太快 | 注意回调 |
-| MACD金叉 | 中期动能向上 | 偏多 |
-| RSI>70 | 超买 | 不宜追高 |
-| ensemble跑赢buy_hold | 策略有超额收益 | 可参考信号 |
-| 最大回撤>15% | 波动大 | 需设止损 |
-
-### compare — 多股对比
-
-```bash
-python3 bin/quant.py compare sh600519,sz000858,sh601212      # 自动显示实时行情
-python3 bin/quant.py compare sh000001,sz399001,sz399006 --period 1w
-```
-
-输出：各股指标并排 + 综合评分排名 + 实时价格。评分最高 = 技术面最强。
-
-### backtest — 策略回测
-
-🔴 CHECKPOINT：执行前确认股票代码、策略名、资金量。含 `--capital`/`--stop-loss` 时须用户确认参数。
-
-```bash
-python3 bin/quant.py backtest sh510500 --strategy ensemble    # 多策略共振
-python3 bin/quant.py backtest sh600519 --strategy macd --html # 含HTML图表
-python3 bin/quant.py backtest sh600519 --strategy rsi --capital 200000 --stop-loss 0.05
-```
-
-| 策略 | 逻辑 | 适用场景 |
-|------|------|---------|
-| `buy_hold` | 买入持有（基准） | 对比基准 |
-| `ma_cross` | MA5/MA20金叉死叉 | 趋势行情 |
-| `macd` | DIF/DEA交叉 | 中期趋势 |
-| `rsi` | RSI超买超卖 | 震荡行情 |
-| `boll` | 布林带轨道反弹 | 区间震荡 |
-| `kdj` | KDJ金叉死叉 | 短线交易 |
-| `ensemble` | **多策略共振（推荐）** | 过滤假信号 |
-
-**关键指标**：总收益率 vs 基准、最大回撤<15%较健康、夏普>1较好>2优秀、胜率>50%正期望。
-
-### scan — 市场扫描
-
-🛑 STOP：批量扫描（>20只）前确认范围，加2-3秒间隔避免429限流。
-
-```bash
-python3 bin/quant.py scan --strategy macd
-python3 bin/quant.py scan --strategy ma_cross --min-volume 1000000
-```
-
-输出按信号排序，金叉=潜在买入机会。结合RSI过滤超买（>70不追），成交量<100万流动性差。
-
-### indicators — 技术指标
-
-```bash
-python3 bin/quant.py indicators sh600519 --indicators ma5,ma10,ma20,macd,rsi
-python3 bin/quant.py indicators sh600519 --indicators boll,kdj,cci,wr,atr,bias,obv
-```
-
-多指标交叉验证更可靠（如MACD金叉+RSI中性=较安全的买入信号）。
-
-### pattern — 形态识别
-
-```bash
-python3 bin/quant.py pattern sh600519                            # 全部形态
-python3 bin/quant.py pattern sh600519 --pattern w-bottom,cup-handle  # 指定形态
-```
-
-| 形态 | 信号 |
-|------|------|
-| W底(`w-bottom`) | 底部反转 |
-| V型反转(`v-reversal`) | 底部反转 |
-| 杯柄(`cup-handle`) | 突破买入 |
-| 三重底(`triple-bottom`) | 底部确认 |
-| 回踩买入(`dip-buy`) | 顺势买入 |
-
-"已确认"比"形成中"更可靠。深度越大，后续反弹空间通常越大。
-
-### fund — 资金面分析
-
-```bash
-python3 bin/quant.py fund sh600519
-```
-
-主力净流入=机构在买（偏多）。连续3日以上主力流入=资金面趋势确认。
-
-### data — 原始行情
-
-```bash
-python3 bin/quant.py data sh600519 --count 30               # 日线
-python3 bin/quant.py data sh600519 --period 15m --count 50   # 15分钟线
-```
-
----
-
-## 新增命令
-
-### realtime — 实时行情
-
-腾讯/东方财富秒级数据，无需akshare。
-
-```bash
-python3 bin/quant.py realtime sh600519,sz000858,sh601212
-python3 bin/quant.py realtime sh600519 --source tencent
-```
-
-```
-📡 实时行情  数据源: auto
-  🔴 贵州茅台(SH600519)  1332.95  -0.69%  高:1339.28 低:1327.11 昨:1342.17
-  🔴 五 粮 液(SZ000858)  86.87  -2.38%  高:88.08 低:86.62 昨:88.99
-```
-
-涨🟢/跌🔴标识，含最高价/最低价/昨收。
-
-### search — 股票搜索
-
-```bash
-python3 bin/quant.py search 白银
-python3 bin/quant.py search 宁德时代
-```
-
-```
-🔍 搜索: 白银
-  SZBK1616     白银
-  共找到 1 条结果
-```
-
-### diagnose — 综合诊断
-
-技术面 + 资金面 + 形态，多维度评分。
-
-```bash
-python3 bin/quant.py diagnose sh600519
-```
-
-```
-🏥 股票综合诊断: sh600519
-  技术面得分: -3/8
-  形态: w-bottom(2) v-reversal(1) cup-handle(1)
-  综合诊断: 强烈看空 🔴🔴🔴 (技术-3 + 资金+0 = -3)
-```
-
-### macro — 宏观数据
-
-```bash
-python3 bin/quant.py macro cpi       # CPI
-python3 bin/quant.py macro pmi       # PMI
-python3 bin/quant.py macro gdp       # GDP
-python3 bin/quant.py macro m2        # M2货币供应
-python3 bin/quant.py macro lpr       # LPR利率
-python3 bin/quant.py macro trade     # 进出口
-```
-
-```
-📊 宏观数据: 居民消费价格指数 (CPI)
-  2026年04月份  全国-同比增长: 1.20  全国-环比增长: 0.30
-  2026年03月份  全国-同比增长: 1.00  全国-环比增长: -0.70
-```
-
-### hotspot — 市场热点
-
-```bash
-python3 bin/quant.py hotspot
-python3 bin/quant.py hotspot --top 30
-```
-
-⚠️ hotspot 依赖东方财富网络接口，部分网络环境下可能不可用。
-
-### market — 市场情绪面分析
-
-涨停池/跌停池/情绪判断/龙虎榜/板块资金流/北向资金/融资融券，一站式市场情绪全景。
-
-```bash
-python3 bin/quant.py market                      # 默认参数
-python3 bin/quant.py market --limit 10 --days 5  # 显示10条，龙虎榜近5日
-python3 bin/quant.py market --period 5日          # 板块资金流用5日累计
-```
-
-```
-🌊 市场情绪面分析
-  🔴 涨停池: 54只（利仁科技5连板、蒙娜丽莎6连板）
-  🟢 跌停池: 15只（通达股份2连跌停）
-  情绪判断: 涨停54只 / 跌停15只 → 🌊 正常
-  🐉 龙虎榜: 德明利 +22.1亿、长盈通 +15.0亿
-  📋 融资融券: 融资余额 14,408亿
-```
-
-**情绪周期速查**：
-
-| 状态 | 涨停数 | 跌停数 | 操作建议 |
-|------|--------|--------|---------|
-| ❄️ 冰点期 | <30 | >50 | 最好的埋伏时机 |
-| 🌡️ 修复期 | 增多 | 减少 | 小仓位试探 |
-| 🔥 高潮期 | >100 | <10 | 最危险，准备撤退 |
-| 🌊 退潮期 | 减少 | 增多 | 绝不追高 |
-
-### market-temp — 市场温度计
-
-综合5个维度（巴菲特指标/股债利差/涨跌停比/QVIX波动率/市场活跃度）计算0-100温度分数，判断市场偏热(贪婪)还是偏冷(恐惧)。
-
-```bash
-python3 bin/quant.py market-temp              # 市场温度
-python3 bin/quant.py market-temp --json       # JSON输出
-```
-
-```
-==================================================
-        A股市场温度计 (Market Temperature)
-==================================================
-  综合温度: 53.4 / 100  [WARM] 中性
-  [==========>         ] 53/100
---------------------------------------------------
-  股债利差 (权重20%)  利差=0.06%  子评分: 40.6
-  新高/新低 (权重20%) 涨停/跌停比(30/21)  子评分: 58.6
-  QVIX波动率 (权重20%) QVIX=22.66  子评分: 49.4
-  市场活跃度 (权重15%) 涨停占比(30/51)  子评分: 68.8
-==================================================
-```
-
-**温度解读**：≥70 偏热/贪婪（注意风险）| 40-70 中性 | <40 偏冷/恐惧（关注机会）
-
-### PanWatch 数据集成（热门榜/板块/资金/基本面）
-
-移植自 [PanWatch](https://github.com/TNT-Likely/PanWatch) 的轻量数据接口，不依赖 akshare，基于东方财富 push2/push2his 和腾讯 qt.gtimg.cn。
-
-```bash
-python3 bin/quant.py hot-stocks --mode turnover        # 热门股票(成交额)
-python3 bin/quant.py hot-stocks --mode gainers -n 10   # 热门股票(涨幅前10)
-python3 bin/quant.py hot-boards --mode gainers         # 热门板块(涨幅)
-python3 bin/quant.py board-stocks BK0892 -n 10         # 白酒板块成分股
-python3 bin/quant.py capital-flow 600519               # 资金流向细分
-python3 bin/quant.py fundamentals 600519             # 基本面快照
-```
-
-**`capital-flow` 输出示例**：
-
-```
-============================================================
-  资金流向细分: 600519 贵州茅台
-============================================================
-  主力净流入: -5.79亿 (-5.69%)  [主力流出]
-  超大单: -0.95亿
-  大单: -4.84亿
-  中单: 5.80亿
-  小单: -0.04亿
-  5日主力净流入: XX亿
-============================================================
-```
-
-**`fundamentals` 输出示例**：
-
-```
-============================================================
-  基本面快照: 600519 贵州茅台
-============================================================
-  PE(TTM): 19.77
-  PE(静态): 15.01
-  PB:      7.02
-  总市值: 16351.07 亿
-  流通市值: 16351.07 亿
-============================================================
-```
-
-### valuation — 个股估值分位
-
-获取PE/PB/PS历史数据（东财datacenter，约2000+交易日），计算当前估值在历史区间中的百分位。
-
-```bash
-python3 bin/quant.py valuation 600519         # 茅台估值分位
-python3 bin/quant.py valuation 000858 --json  # JSON输出
-```
-
-```
-==================================================
-  个股估值分析: 600519
-==================================================
-  PE(市盈率): [LOW]
-    当前值: 19.77  分位数: 4% (低估)
-    最小: 17.66 | 中位: 32.49 | 最大: 73.29
-  PB(市净率): [LOW]
-    当前值: 6.04  分位数: 2% (低估)
-  综合评估: 低估
-==================================================
-```
-
-**分位解读**：<30% 低估（关注）| 30-70% 合理 | >70% 偏高（谨慎）
-
-### info — 个股深度信息
-
-限售解禁/股东人数变化/十大流通股东/行业PE估值/大宗交易，个股多维度深度分析。
-
-```bash
-python3 bin/quant.py info 600519     # 茅台深度信息
-python3 bin/quant.py info 000858     # 五粮液深度信息
-```
-
-```
-📋 个股深度信息: 600519
-  📅 限售解禁: 近期无解禁
-  👥 股东人数: 2026Q1 243,159户 (减少12,733户 -4.98%) → 筹码集中 🟢
-  🏛️ 十大流通股东: 茅台集团54.07%、港中央6.91%(+609万股)
-  📊 行业PE: 制造业 加权PE 37.51 / 中位PE 52.00
-  🏷️ 大宗交易: 2026-05-15 成交价1332.96 2笔
-```
-
-**解读要点**：
-- 股东人数减少 → 筹码集中，主力在吸筹（偏多）
-- 股东人数增加 → 散户化趋势（偏空）
-- 十大股东增减 → 机构/港资是否在加仓
-- 行业PE对比 → 个股PE是否高于行业中位
-
-### chip — 筹码分布分析
-
-基于K线+换手率近似计算筹码分布（移植自 go-stock），输出平均成本/获利比例/集中度。
-
-```bash
-python3 bin/quant.py chip sh600519              # 默认日线120根
-python3 bin/quant.py chip sh600519 --count 250  # 250根K线
-python3 bin/quant.py chip sh600519 --bins 100   # 100个价格分箱
-```
-
-```
-============================================================
-  筹码分布分析 (120个交易日)
-============================================================
-  当前价格: 1332.95
-  平均成本: 1285.42
-  获利比例: 68.5%
-  价格区间: 1180.00 ~ 1450.00
-  筹码集中度(前5): 42.3%
-------------------------------------------------------------
-  筹码最集中价位:
-      1305.50   8.5%  ████████
-      1285.25   7.2%  ███████
-      1325.75   6.8%  ██████
-============================================================
-  解读: 获利盘多，注意回调压力
-```
-
-**解读速查**：
-
-| 看到 | 意味着 | 建议 |
-|------|--------|------|
-| 获利比例>80% | 大部分筹码盈利 | 抛压大，注意回调 |
-| 获利比例<20% | 大部分筹码套牢 | 可能接近底部区域 |
-| 平均成本≈当前价 | 市场成本一致 | 变盘窗口，关注方向 |
-| 集中度(前5)>40% | 筹码高度集中 | 主力控盘，波动可能加大 |
-| 集中度(前5)<15% | 筹码分散 | 散户行情，趋势性弱 |
-
-### board-flow — 板块资金流
-
-行业/概念板块主力净流入排名（东财 data.eastmoney.com）。
-
-```bash
-python3 bin/quant.py board-flow                     # 行业板块(默认)
-python3 bin/quant.py board-flow --type concept      # 概念板块
-python3 bin/quant.py board-flow --top 10            # 前10名
-```
-
-```
-======================================================================
-  行业板块资金流排名 (主力净流入)
-======================================================================
-  排名 板块名称     代码       主力净流入
-----------------------------------------------------------------------
-  1    半导体     BK0447     🟢+25.36亿
-  2    汽车整车   BK0481     🟢+18.92亿
-  3    白酒       BK0477     🔴-12.45亿
-======================================================================
-  统计: 15个流入 / 5个流出
-```
-
-**解读速查**：
-
-| 看到 | 意味着 | 建议 |
-|------|--------|------|
-| 行业板块连续3日净流入 | 资金持续看好该行业 | 关注行业内龙头个股 |
-| 概念板块单日暴增 | 短线热点炒作 | 追高风险大，注意持续性 |
-| 流入/流出比>3:1 | 市场资金面偏多 | 可适度参与 |
-| 流出板块集中在某行业 | 资金撤退 | 回避该行业个股 |
-
-### finance — F10财务指标
-
-东财 datacenter 历史财务数据（营收/净利润/ROE/毛利率/资产负债率）。
-
-```bash
-python3 bin/quant.py finance 600519                # 最近5期
-python3 bin/quant.py finance 600519 --periods 8    # 最近8期
-python3 bin/quant.py finance 600519 --forecast     # 含机构预测
-```
-
-```
-================================================================================
-  F10 主要财务指标: 600519
-================================================================================
-  📅 2026-03-31
-    每股收益: 21.38 元 | 扣非: 20.95 元
-    营业总收入: 539.02亿 | 归属净利润: 272.15亿
-    ROE(加权): 8.25% | 毛利率: 91.50%
-    营收同比: +6.54% | 净利同比: +1.47%
-================================================================================
-```
-
-**解读速查**：
-
-| 看到 | 意味着 | 建议 |
-|------|--------|------|
-| ROE连续3期>15% | 盈利能力强且稳定 | 优质公司特征 |
-| 毛利率同比下降>5% | 成本压力或竞争加剧 | 关注后续趋势 |
-| 营收同比+但净利同比- | 增收不增利 | 警惕费用失控 |
-| 资产负债率>70% | 高杠杆 | 注意偿债风险（银行/地产除外） |
-| 扣非EPS远低于EPS | 非经常损益占比大 | 盈利质量差，不可持续 |
-
-### wscn — 华尔街见闻快讯
-
-多频道全球财经快讯（全球7x24/A股/美股/港股/外汇/商品/黄金/原油/债券）。
-
-```bash
-python3 bin/quant.py wscn                              # 全球7x24(默认)
-python3 bin/quant.py wscn --channel a-stock-channel    # A股频道
-python3 bin/quant.py wscn --channel us-stock-channel   # 美股频道
-python3 bin/quant.py wscn --limit 10                   # 10条
-```
-
-频道列表：`global-channel` | `a-stock-channel` | `us-stock-channel` | `hk-stock-channel` | `forex-channel` | `commodity-channel` | `goldc-channel` | `oil-channel` | `bond-channel` | `crypto-channel` | `xgb-channel`
-
-### report — 个股研究报告
-
-东财 reportapi 个股研报（标题/机构/评级/作者）。
-
-```bash
-python3 bin/quant.py report 600519              # 最近30天
-python3 bin/quant.py report 600519 --days 90    # 最近90天
-python3 bin/quant.py report 600519 --top 5      # 前5篇
-```
-
-### notice — 上市公司公告
-
-东财 np-anotice-stock 公告列表（标题/日期/类型）。
-
-```bash
-python3 bin/quant.py notice 600519             # 茅台公告
-python3 bin/quant.py notice 600519 --top 10    # 前10条
-```
-
-### interactive — 互动易数据
-
-巨潮资讯互动易平台（投资者问答）。
-
-```bash
-python3 bin/quant.py interactive 茅台           # 搜索关键词
-python3 bin/quant.py interactive 600519        # 股票代码
-python3 bin/quant.py interactive 新能源 --top 10
-```
-
-### 广发 GF MCP 数据 (etf-rank / lhb-gf / index-val / gf-quant)
-
-基于广发证券 MCP server 的数据适配层，覆盖 ETF 排行、龙虎榜深度分析、指数估值分位、财务对比。需在 `config.yaml` 设置 `gf_api_key`（Bearer token）。
-
-#### etf-rank — ETF排行榜
-
-涨幅/跌幅/规模/换手率等13种榜单。
-
-```bash
-python3 bin/quant.py etf-rank --type gainers       # 涨幅榜
-python3 bin/quant.py etf-rank --type losers        # 跌幅榜
-python3 bin/quant.py etf-rank --type scale         # 规模榜
-python3 bin/quant.py etf-rank --type turnover      # 换手率榜
-```
-
-#### lhb-gf — 龙虎榜深度分析
-
-上榜排行/指定日期/营业部统计。
-
-```bash
-python3 bin/quant.py lhb-gf                        # 上榜排行
-python3 bin/quant.py lhb-gf --date 2026-05-19      # 指定日期
-python3 bin/quant.py lhb-gf --mode broker          # 营业部统计
-```
-
-#### index-val — 指数估值分位
-
-PE/PB百分位 + 关联ETF。
-
-```bash
-python3 bin/quant.py index-val --top 10             # 指数估值分位
-python3 bin/quant.py index-val --top 20 --json      # JSON输出
-```
-
-**分位解读**：<20% 历史低估区间 | 20-80% 合理 | >80% 历史高估区间
-
-#### gf-quant — 广发财务对比
-
-市值/估值/PE百分位/行业均值多维对比。
-
-```bash
-python3 bin/quant.py gf-quant 600519,000858       # 茅台 vs 五粮液
-python3 bin/quant.py gf-quant 600519 --json       # JSON输出
-```
-
-**ETF/指数估值解读速查**：
-
-| 看到 | 意味着 | 建议 |
-|------|--------|------|
-| ETF涨幅榜前3 + 换手率>10% | 短期资金博弈 | 注意波动，不追高 |
-| 指数PE分位<20% | 历史低估区间 | 关注左侧布局机会 |
-| 指数PE分位>80% | 历史高估区间 | 谨慎，注意回调风险 |
-| 龙虎榜上榜>10次/月 | 高度活跃游资标的 | 结合机构席位连续性判断 |
-
-### 东方财富妙想 AI (em-*)
-
-需在 `config.yaml` 设置 `em_api_key`。注册：https://ai.eastmoney.com/mxClaw
-
-```bash
-python3 bin/quant.py em-diagnose sh600519                  # AI综合诊断
-python3 bin/quant.py em-pick "白酒板块龙头"                 # AI自然语言选股
-python3 bin/quant.py em-ask "茅台Q1业绩怎么样"              # AI问答
-python3 bin/quant.py em-news 白酒                           # AI资讯
-python3 bin/quant.py em-fund sh600519                      # AI基金分析
-```
-
-```
-🤖 东方财富妙想 AI 诊断
-  查询: 分析sh600519
-
-  一、基本面：2026Q1营收539亿(+6.54%)，净利润272亿(+1.47%)
-  二、技术面：股价1332.95，下行通道，PE历史百分位17.36%
-  三、资金面：主力净流出6.52亿，连续10日DDX为负
-  总结：基本面稳健，估值历史低位，短期技术面偏弱
-```
-
-```
-🤖 东方财富妙想 AI 选股
-  条件: 白酒板块龙头  符合条件: 57 只
-  |600519|贵州茅台|1332.95|-0.69%|1.67万亿|
-  |000858|五 粮 液|86.87|-2.38%|3371.95亿|
-  ...
-```
-
-### news — 新闻资讯
-
-东财7x24快讯 + 财联社电报 + 东财搜索，实时掌握市场动态。
-
-```bash
-python3 bin/quant.py news                    # 快讯列表 (东财7x24+财联社)
-python3 bin/quant.py news 茅台                # 搜索关键词
-python3 bin/quant.py news --top 10           # 显示10条
-```
-
-```
-📰 新闻资讯
-  1. 【水利部针对赣鄂湘粤桂黔琼七省区启动洪水防御Ⅳ级应急响应】
-     2026-05-19 13:42  [财联社]
-  2. 【三星电子股价转涨，抹去早盘5.3%的跌幅】
-     2026-05-19 13:41  [财联社]
-```
-
-### cache — 缓存管理
-
-```bash
-python3 bin/quant.py cache stats    # 查看缓存
-python3 bin/quant.py cache clear    # 清理缓存
-```
-
-### list — 可用资源
-
-```bash
-python3 bin/quant.py list
-```
-
----
-
-## 行动映射
-
-| 看到什么 | 意味着 | 建议 |
-|---------|--------|------|
-| MACD金叉 + RSI<70 + 多头排列 | 技术面偏多 | 可关注，逢低布局 |
-| MACD死叉 + RSI>70 + 空头排列 | 技术面偏空 | 减仓观望 |
-| MA5偏离>3% | 短期涨太快 | 不宜追高 |
-| ensemble夏普>1.5且跑赢基准 | 策略有效 | 可参考信号 |
-| 最大回撤>20% | 波动大 | 严格止损 |
-| compare评分差>20分 | 强弱分明 | 关注最强 |
-| 获利比例>80% + 集中度>40% | 筹码高度获利 | 抛压大，不宜追高 |
-| 获利比例<20% + 估值分位<30% | 套牢+低估 | 关注底部机会 |
-| 行业板块连续3日净流入 | 资金持续看好 | 关注板块内龙头 |
-| 概念板块单日暴增 | 短线炒作 | 注意持续性，不追高 |
-| ROE连续>15% + 毛利率稳定 | 基本面优质 | 可长期关注 |
-| 营收增+净利降 | 增收不增利 | 警惕费用/成本问题 |
-| 研报密集发布(>5篇/月) | 机构关注度高 | 结合评级方向判断 |
-| 互动易频繁提及某概念 | 市场热点关联 | 交叉验证news/wscn |
-| 指数PE分位<10% + 关联ETF资金流入 | 低估+资金共振 | 左侧布局窗口 |
-| 龙虎榜机构席位连续买入 | 机构资金持续介入 | 跟踪机构动向 |
-| ETF换手率暴增 + 涨幅居前 | 短期资金博弈激烈 | 注意波动，不追高 |
-
----
-
-## K线周期
-
-`1d`(日线) | `1w`(周线) | `1M`(月线) | `1m` | `5m` | `15m` | `30m` | `60m`
-
----
-
-## 参数速查
-
-| 参数 | 说明 | 默认值 |
-|------|------|--------|
-| `--period` | K线周期 | `1d` |
-| `--count` | 数据条数 | `120` |
-| `--strategy` | 策略名 | `buy_hold` |
-| `--capital` | 初始资金 | `100000` |
-| `--stop-loss` | 止损比例(如0.05=5%) | 无 |
-| `--ensemble N` | 共振阈值 | `3` |
-| `--html` | 生成HTML图表 | — |
-| `--json` | 输出JSON格式 | — |
-| `--source` | 数据源(tencent/eastmoney) | auto |
-
----
-
-## 工作流模板
-
-### 场景A：分析一只股票
-```
-用户："茅台技术面怎么样"
-→ 🔴 CHECKPOINT A：确认 sh600519
-→ python3 bin/quant.py analyze sh600519
-→ 🔴 CHECKPOINT B：一句话总结 + 关键数值 + 后续建议
-→ 🔴 CHECKPOINT C：如涉及买卖，声明免责
-```
-
-### 场景B：选股对比
-```
-用户："茅台五粮液泸州老窖哪个强"
-→ 🔴 CHECKPOINT A：确认代码
-→ python3 bin/quant.py compare sh600519,sz000858,sh601212
-→ 🔴 CHECKPOINT B：排名 + 对比表 + 一句话结论
-```
-
-### 场景C：策略验证
-```
-用户："ensemble回测中证500"
-→ 🔴 CHECKPOINT A：确认 sh510500 + ensemble策略
-→ python3 bin/quant.py backtest sh510500 --strategy ensemble
-→ 🔴 CHECKPOINT B：收益率/回撤/夏普 vs buy_hold
-→ 🔴 CHECKPOINT C：声明回测不代表未来
-```
-
-### 场景D：AI诊断
-```
-用户："帮我全面分析一下茅台"
-→ 🔴 CHECKPOINT A：确认 sh600519 + em_api_key已配置
-→ python3 bin/quant.py em-diagnose sh600519  (AI基本面+技术面+资金面)
-→ python3 bin/quant.py analyze sh600519      (本地技术指标验证)
-→ 🔴 CHECKPOINT B：综合AI报告+本地数据，给出结论
-```
-
-### 场景E：复合需求
-```
-用户："茅台和五粮液哪个强，顺便看看MACD回测"
-→ 🔴 CHECKPOINT A：确认代码 + 回测参数
-→ Step 1: compare sh600519,sz000858
-→ Step 2: backtest sh600519 --strategy macd
-→ Step 3: backtest sz000858 --strategy macd
-→ 🔴 CHECKPOINT B：综合结论
-```
-
-### 场景F：筹码与成本分析
-```
-用户："茅台现在筹码怎么样，套牢盘多不多"
-→ 🔴 CHECKPOINT A：确认 sh600519
-→ Step 1: chip sh600519              (筹码分布/获利比例/集中度)
-→ Step 2: valuation 600519           (估值分位交叉验证)
-→ 🔴 CHECKPOINT B：获利比例+平均成本+估值分位，综合判断当前位置
-→ 🛑 STOP：获利比例>80% → 提示"获利盘多，注意回调压力"，不给出买入建议
-```
-
-### 场景G：板块资金流向
-```
-用户："今天资金都往哪跑"
-→ Step 1: board-flow --type industry --top 10   (行业板块)
-→ Step 2: board-flow --type concept --top 10    (概念板块)
-→ 🔴 CHECKPOINT B：一句话总结资金主攻方向 + 连续流入板块
-→ 🛑 STOP：概念板块单日暴增 → 提示"短线炒作，注意持续性"
-```
-
-### 场景H：基本面深度研究
-```
-用户："茅台基本面怎么样，机构怎么看"
-→ 🔴 CHECKPOINT A：确认 600519
-→ Step 1: finance 600519 --periods 5   (财务指标趋势)
-→ Step 2: report 600519 --days 90      (近期研报/评级)
-→ Step 3: notice 600519                (近期公告)
-→ Step 4: info 600519                  (股东/解禁/大宗)
-→ 🔴 CHECKPOINT B：财务趋势+机构评级+公告要点，综合结论
-→ 🔴 CHECKPOINT C：涉及估值判断 → 声明"仅供参考，不构成投资建议"
-```
-
-### 场景I：资讯快讯速览
-```
-用户："最近有什么重要消息"
-→ Step 1: wscn --limit 10                       (全球快讯)
-→ Step 2: wscn --channel a-stock-channel --limit 5  (A股聚焦)
-→ Step 3: news --top 10                          (东财+财联社)
-→ 🔴 CHECKPOINT B：按重要性排序摘要，标注影响板块
-→ 🛑 STOP：涉及具体买卖建议 → 只转述事实，不加主观判断
-```
-
-### 场景J：GF MCP数据交叉验证
-```
-用户："帮我看看现在哪些板块有机会"
-→ 🔴 CHECKPOINT A：确认 gf_api_key 已配置
-→ Step 1: index-val --top 10                      (指数估值分位)
-→ Step 2: etf-rank --type gainers/turnover      (ETF资金流向)
-→ Step 3: lhb-gf                                (龙虎榜游资动向)
-→ Step 4: gf-quant <候选股>                      (财务对比验证)
-→ 🔴 CHECKPOINT B：低估指数 + ETF资金流入 + 游资关注 = 板块性机会信号
-→ 🔴 CHECKPOINT C：涉及买卖 → 声明"仅供参考，不构成投资建议"
-```
-
----
-
-## 反例黑名单（不要做的事）
-
-| # | 反模式 | 为什么不要做 | 正确做法 |
-|---|--------|-------------|---------|
-| 1 | **单指标下结论** | 仅凭 RSI<30 就说"买入"，忽略趋势/量能/基本面 | 至少2个维度交叉验证（如 MACD金叉 + RSI中性 + 量能放大） |
-| 2 | **追超买股** | RSI>70 或 MA5偏离>3% 时推荐买入 | 提示"短期超买，不宜追高"，等回调信号 |
-| 3 | **忽略市场环境** | 大盘暴跌时只看个股技术面偏多就推荐 | 先 `market` 看情绪周期，冰点期/退潮期降低仓位建议 |
-| 4 | **回测当预测** | "回测年化30%所以未来也能赚" | 必须声明"回测基于历史数据，不代表未来收益" |
-| 5 | **跨行业裸比** | 拿银行股和科技股直接比 PE 高低 | 用 `info` 查行业PE中位数，在同行业内比较 |
-| 6 | **忽略止损** | 给出买入建议但不提止损位 | 结合 ATR 或最大回撤给出止损参考（如"跌破MA20止损"） |
-| 7 | **数据不足强分析** | 只有30根K线就跑周线回测 | 提示数据不足，建议增加 `--count` 或切换日线 |
-| 8 | **替用户做决策** | "你应该现在买入XX" | 只输出技术面事实+信号，决策权留给用户 |
-| 9 | **忽略免责声明** | 分析完直接结束 | 涉及买卖建议时必须附"技术分析仅供参考，不构成投资建议" |
-| 10 | **批量请求不限流** | 一次 scan 200只股票不加间隔 | 批量分析加2-3秒间隔，避免触发数据源限流(429) |
-| 11 | **筹码分布当精确数据** | 筹码分布是换手率近似估算，当作真实持仓成本 | 说明"基于换手率近似计算"，结合估值分位交叉验证 |
-| 12 | **单日板块资金流下结论** | 仅凭一天板块资金流入就推荐板块 | 至少观察3日趋势，区分行业(持续)和概念(短线)资金 |
-| 13 | **单期财务数据定论** | 仅看一期ROE/毛利率就判断公司好坏 | 用 `--periods 5` 看趋势，结合研报(`report`)交叉验证 |
-| 14 | **快讯当交易信号** | 看到wscn/news某条消息就建议买卖 | 只转述事实+标注影响板块，不加主观买卖判断 |
-| 15 | **仅凭ETF单日涨幅推荐买入** | 短期波动不代表趋势，单日涨幅易反转 | 结合估值分位(`index-val`)+多日资金流向交叉验证 |
-| 16 | **龙虎榜数据滞后追高** | 上榜时可能已高位，游资次日可能出货 | 注意上榜日期，结合`lhb-gf`机构席位连续性判断 |
-
----
-
-## 异常处理（三段式 Fallback）
-
-| 触发条件 | 一线修复 | 仍失败兜底 |
-|----------|---------|-----------|
-| `ImportError: akshare` | `pip install akshare numpy pandas requests` | 使用不依赖akshare的模块（realtime/valuation/fundamentals） |
-| 股票代码格式错 | 提示正确格式：`sh600519` / `sz000001` / 纯数字`600519` | 用 `search 关键词` 查找正确代码 |
-| akshare 接口返回空/报错 | 自动切换备用源（@_with_fallback 装饰器） | 提示"数据源暂不可用，稍后重试" |
-| 网络超时 / ConnectionError | 等待5秒后重试1次 | 提示"网络连接失败"，建议检查代理设置 |
-| akshare 429 限流 | 批量分析加2-3秒间隔 | 等30秒后重试；仍失败则跳过该股票继续下一只 |
-| push2 clist/fflow 连接重置 | 切换 akshare 同类函数（hot_rank_em/sector_hot） | 提示"东财接口限流"，建议非交易时段重试 |
-| 股票停牌 | 提示"已停牌，数据可能不完整" | 仍输出最近交易日数据，标注⚠️ |
-| 非交易时段查询 | 正常返回，数据截至上一交易日 | 无需额外处理 |
-| 股票退市/不存在 | 提示"未找到该股票数据" | 建议用 `search` 确认代码是否正确 |
-| K线数据不足（<30条） | 自动降级：周线→日线，提示用户 | 提示"数据量不足以计算指标，请增加 --count" |
-| em-api 返回错误 | 自动降级到 em-ask 通用端点 | 提示"AI接口暂不可用"，建议用本地 analyze 替代 |
-| 估值数据为空（新股/次新） | 缩短period到"近一年"重试 | 提示"上市时间过短，无足够历史数据计算分位" |
-| 筹码分布获取失败 | 跳过筹码模块，仅输出PE/PB/PS分位 | 综合评估标注"筹码数据缺失" |
-| market-temp 指标缺失 | 按可用指标归一化计算（权重自动调整） | 全部缺失时返回50分+错误提示 |
-| wscn API 返回非20000 | 重试1次（间隔3秒） | 提示"华尔街见闻接口暂不可用"，建议用 `news` 替代 |
-| report 返回空列表 | 扩大 `--days` 到180天重试 | 提示"近期无研报覆盖"，建议用 `em-diagnose` AI分析替代 |
-| notice 接口超时 | 重试1次 | 提示"公告接口暂不可用"，建议直接访问巨潮资讯网 |
-| interactive 搜索无结果 | 换用更短/更通用的关键词重试 | 提示"未找到相关互动易数据" |
-| board-flow 连接重置 | 切换 akshare sector_fund_flow 同类函数 | 提示"东财板块资金接口限流"，建议非交易时段重试 |
-| finance 财务数据为空 | 检查代码是否正确（`search`确认） | 提示"未找到财务数据"，新股/次新股可能无历史报告期 |
-| GF MCP超时/401 | 检查`gf_api_key`配置，确认Bearer token有效 | 提示"GF MCP认证失败"，建议重新获取token |
-| GF MCP返回空数据 | 非交易时间或参数错误，检查market/date参数 | 提示"无数据返回"，确认交易时段及参数格式后重试 |
-
----
-
-## 项目结构
-
-```
-a-stock-data-quant/
-├── bin/
-│   ├── quant.py              # CLI 主入口
-│   └── stock_full.py         # 综合分析脚本
-├── lib/
-│   ├── akshare_data.py       # akshare 数据层 (含降级链+push2ex备用)
-│   ├── ashare.py             # 行情数据获取 (含mootdx/百度降级)
-│   ├── backtest.py           # 回测引擎
-│   ├── chart.py              # ECharts HTML 图表
-│   ├── data_cache.py         # CSV+JSON 数据缓存 (4档TTL)
-│   ├── em_api.py             # 东方财富妙想 AI 接口
-│   ├── fallback.py           # 多数据源降级引擎
-│   ├── market_temp.py        # 市场温度计 (5指标加权)
-│   ├── mytt.py               # 技术指标库（MyTT V3.4）
-│   ├── patterns.py           # 形态识别
-│   ├── realtime_data.py      # 实时行情 (腾讯/东方财富/mootdx)
-│   ├── settings.py           # 配置管理
-│   ├── sources_baidu.py      # 百度财经 API (K线/资金流/概念)
-│   ├── sources_datacenter.py # 东财数据中心 (龙虎榜/融资/大宗/股东/解禁)
-│   ├── sources_gf.py         # 广发MCP数据适配层 (ETF/龙虎榜/指数估值/F10)
-│   ├── sources_hexin.py      # 同花顺北向资金
-│   ├── sources_mootdx.py     # 通达信 TCP 7709 (实时/K线)
-│   ├── sources_news.py       # 新闻聚合 (东财7x24/财联社/搜索)
-│   ├── sources_panwatch.py   # PanWatch 数据接口 (热门榜/板块/资金/基本面)
-│   ├── sources_wallstreetcn.py # 华尔街见闻 (全球快讯/财经日历)
-│   ├── stock_notice.py       # 研报/公告/互动易 (东财reportapi/np-anotice/巨潮)
-│   ├── chip_distribution.py  # 筹码分布计算 (移植自 go-stock)
-│   ├── board_fund_flow.py    # 板块资金流 (东财data.eastmoney.com)
-│   ├── f10_finance.py        # F10财务指标 (东财datacenter)
-│   ├── strategies.py         # 策略模块
-│   └── valuation.py          # 个股估值分位 (东财datacenter+百度)
-├── config.yaml               # 配置文件（em_api_key等）
-├── requirements.txt          # Python 依赖
-└── LICENSE                   # MIT
-```
-
----
-
-## 数据流
-
-```
-用户输入 → 意图路由 → quant.py CLI
-  ├─ analyze/compare/backtest/scan/indicators/pattern/fund/diagnose
-  │   → akshare_data.py → mytt.py (指标) → strategies.py (信号)
-  │   → [降级] → sources_baidu.py / sources_datacenter.py / sources_hexin.py
-  │   → backtest.py (回测) → chart.py (HTML) → output
-  ├─ realtime/search
-  │   → realtime_data.py (腾讯→东方财富→mootdx) → output
-  ├─ news (新闻资讯)
-  │   → sources_news.py (东财7x24/财联社/东财搜索) → output
-  ├─ market (市场情绪面)
-  │   → akshare_data.py (涨停池/跌停池/龙虎榜/北向/融资融券) → output
-  ├─ market-temp (市场温度计)
-  │   → market_temp.py (巴菲特/股债利差/涨跌停比/QVIX/活跃度) → output
-  ├─ hot-stocks / hot-boards / board-stocks (热门榜/板块成分)
-  │   → sources_panwatch.py (东财clist) → output
-  ├─ capital-flow (资金流向细分)
-  │   → sources_panwatch.py (东财fflow) → output
-  ├─ fundamentals (基本面快照)
-  │   → sources_panwatch.py (腾讯qt.gtimg) → output
-  ├─ valuation (估值分位)
-  │   → valuation.py (东财datacenter PE/PB/PS历史 → 分位计算) → output
-  ├─ info (个股深度)
-  │   → akshare_data.py (限售解禁/股东人数/十大股东/行业PE/大宗交易) → output
-  ├─ chip (筹码分布)
-  │   → ashare.py (K线) → chip_distribution.py (换手率衰减+高斯核) → output
-  ├─ board-flow (板块资金流)
-  │   → board_fund_flow.py (东财 data.eastmoney.com/dataapi/bkzj) → output
-  ├─ finance (F10财务指标)
-  │   → f10_finance.py (东财 datacenter RPT_F10_FINANCE_MAINFINADATA) → output
-  ├─ wscn (华尔街见闻)
-  │   → sources_wallstreetcn.py (api-one-wscn.awtmt.com) → output
-  ├─ report/notice/interactive (研报/公告/互动易)
-  │   → stock_notice.py (东财reportapi/np-anotice/巨潮irm.cninfo) → output
-  ├─ etf-rank (ETF排行榜)
-  │   → sources_gf.get_etf_rank() → MCP etf_rank server → 格式化输出
-  ├─ lhb-gf (龙虎榜深度分析)
-  │   → sources_gf.get_lhb_rank/by_date() → MCP lhb server → 格式化输出
-  ├─ index-val (指数估值分位)
-  │   → sources_gf.get_index_valuation() → MCP windmill server → 格式化输出
-  ├─ gf-quant (广发财务对比)
-  │   → sources_gf.get_gf_basic() → MCP quant server → 格式化输出
-  ├─ em-diagnose/em-pick/em-ask/em-news/em-fund
-  │   → em_api.py (东方财富妙想AI) → output
-  └─ macro/hotspot/cache/list
-      → akshare_data.py / settings.py / data_cache.py → output
-```
-
----
-
-## License
-
-MIT
+## A股量化数据引擎（整合 a-stock-data-quant）
+
+当你需要**实际获取 A股数据或做量化计算**时，使用本引擎（源自 a-stock-data-quant）：
+
+- **完整内嵌实现（自包含零依赖外部文件）**：`Read references/a-stock-full.md`，按其内嵌代码直接运行。
+- **命令行主程序**：`python3 bin/quant.py <command> <args>`
+  - `analyze <code>` 综合分析（如 `sh600519` / `sz000858`）
+  - `compare <c1>,<c2>` 多股对比
+  - `backtest <code> --strategy ensemble --html` 多策略共振回测
+  - `realtime <code>` 实时行情
+  - `market-temp` 市场温度计（5 维度）
+  - `valuation <code>` 估值分位（PE/PB/PS）
+  - `hot-stocks --mode turnover` 热门股票排行
+  - `hot-boards --mode gainers` 热门板块排行
+  - `board-stocks BK0892` 板块成分股
+  - `capital-flow <code>` 资金流向细分
+  - `fundamentals <code>` 基本面快照
+  - `chip <code>` 筹码分布
+- **数据源**：12 层（腾讯财经 / 东方财富 push2 / mootdx 通达信 / 百度股市通 / 东财 reportapi / 巨潮 cninfo / 东财 datacenter / 同花顺 hexin / 广发 MCP / 东方财富妙想 AI 等）。
+
+## 🔴 数据源降级与故障处理（取数前必读）
+
+引擎内置 12 层源，但**部分源已实测不稳定/失效**。取数时按以下 if-then 分支兜底，**禁止编造或无故跳过**：
+
+| 触发条件（实测故障） | 一线修复 | 仍失败的兜底 |
+|---|---|---|
+| 实时/日K：腾讯(qt.gtimg.cn)正常、新浪(money.finance.sina)正常、东财 push2 本机可能 peer reset（仅补充） | 三者按顺序取，取到的即返回 | 三者都失败 → **明确告知用户"实时行情源当前不可用"，绝不返回训练记忆中的旧价** |
+| 日K 兜底：百度股市通(finance.pae.baidu.com)已返回 `ResultCode:403` **已废弃** | **跳过百度源**，改用腾讯/新浪 | 不把百度当作兜底层（否则会 `raise` 全失败） |
+| 北向资金：同花顺(data.hexin.cn)响应结构已变更、`get_north_flow` 取到空 `[]` | 改用 akshare 北向接口或东财 datacenter | **不输出空的北向结论**，注明"北向数据本次未取得" |
+| 成交额单位：腾讯实时 `fields[37]` 单位与预期不符（实测偏低 1e4） | 改用 `fields[35]` 段取值 | 输出"成交额"前做量级 sanity check（单股日成交额通常千万~百亿级，明显偏离则改取东财 push2 字段） |
+| 腾讯日K：`web.ifzq.gtimg.cn` 走 http 被 302 跳 https | 直接改用 `https://` 端点 | 跟随重定向仍失败则用新浪K线 |
+| **全源失败**（依赖未装/网络全断） | 按上表逐级降级 | 输出"当前数据源未覆盖该标的/字段，需进一步核实"，并给替代路径（WebSearch 公开信息 / 下次重试），**绝对禁止编造数值** |
+
+> 依赖与运行前置：引擎依赖 `akshare/numpy/pandas/requests/pyyaml/mootdx`。**未 `pip install -r requirements.txt` 就直接 `python3 bin/quant.py` 会整层报错**——先确认依赖已装（建议 Python 3.10–3.12，避开 3.13 对 akshare 的兼容问题），缺失则提示用户安装后再跑。
+> **已配好 venv**：本 skill 目录内含 `venv/`（Python 3.12 + 全套依赖，清华镜像安装），运行请用 `venv/Scripts/python.exe`（不要直接用系统 `python3`，那是 3.13 且缺依赖）。Windows 路径：`C:/Users/jangviktor/.workbuddy/skills/a-stock-data-quant/venv/Scripts/python.exe`。
+> **bin/cn 数据层**：`bin/cn/*.py`（equity/futures/research/options/macro）与 wb 引擎共享同一 venv（akshare 已装，`requirements.txt` 已统一 `akshare>=1.18.64`）。调用：`venv/Scripts/python.exe bin/cn/equity.py quote 600519,00700`；其 stdlib 命令（价量/期货/北向）无 akshare 也可跑，研报/期权/宏观命令缺 akshare 时会显式报安装提示（不崩）。
+
+## 个股买卖决策工作流（多指标综合 → 操作建议）
+
+当用户**直接问某只个股"该买 / 该卖 / 能不能进 / 要不要跑"**时，必须走「取数 → 多指标诊断 → 给建议 + 理由」完整链路，**禁止凭感觉或记忆直接给买卖结论**（违反红线：禁编造数据）。
+
+1. 🔴 **取数（数据必须动态获取，不得凭记忆）**：先跑引擎取真实数据——
+   - `python3 bin/quant.py analyze <code>`（实时 / 估值 / 资金流 / 筹码 / 技术信号一次出），或按 `references/a-stock-full.md` 取；
+   - 技术面补 `references/price-action-tools.md`、估值面补 `references/valuation-pricing.md`、资金面补 `references/fund-flow.md`、基本面补 `references/stock-deep-research.md`。
+2. **四维诊断（每维给「偏多 / 中性 / 偏空」+ 关键证据，禁止空泛）**：
+   - **技术面**：趋势（均线上下）+ MACD / RSI / KDJ 位置 + 量价 / 形态（突破 or 背离）
+   - **估值面**：PE / PB / PS 历史分位（低位 = 安全边际）+ 同业对比
+   - **资金面**：主力净流入 / 北向（若可取）/ 换手率 / 筹码集中度
+   - **基本面**：营收净利趋势 / ROE / 护城河 + 近期催化或风险
+3. **综合信号**：四维加权 → 落到明确一档 **买入 / 增持 / 持有 / 减仓 / 卖出**；附**置信度（高 / 中 / 低）**与「核心矛盾点」（最制约结论的一项）。
+4. **操作框架（条件化，非点位承诺）**：给「触发条件 → 动作 → 风控」——
+   - 例：`若回踩 XX 均线不破且量能回升 → 分批建仓；止损位设在 XX；单股仓位 ≤ X%`
+   - **禁止给无条件「现在就买 / 卖」指令**。
+5. 🔴 **CHECKPOINT · 输出前护栏**：结论前先列**前提**（当前市场环境 + 用户风险偏好 + 资金量 / 期限），前提缺失主动追问；回复末尾**必附固定免责声明**（见上方「红线」模板），禁止改写 / 省略。
+
+> 输出结构建议：「结论卡（结论 + 置信度 + 矛盾点）+ 四维诊断表 + 操作框架 + 免责声明」。简短用 Markdown，完整用 HTML 研报风。技术信号基于历史数据、不预测未来，建议仅作决策输入而非指令。
+
+## ETF 买卖决策工作流（多指标综合 → 操作建议）
+
+当用户**直接问某只 ETF / 指数基金 / 场内基金"该买 / 该卖 / 能不能定投 / 要不要跑"**时，走与个股相同的「取数 → 多指标诊断 → 给建议 + 理由」完整链路；**诊断维度按 ETF 特性特化**（ETF 是篮子、无个股式财报），同样禁止凭记忆直接给买卖结论。
+
+1. 🔴 **取数（数据必须动态获取，不得凭记忆）**：引擎对 ETF 代码（如 `510300` 沪深300ETF、`518880` 黄金 ETF）自动识别为 `etf` 品类——
+   - `python3 bin/quant.py analyze <etf_code>`（实时 / 估值 / 资金流 / 技术信号一次出）；
+   - 技术面补 `references/price-action-tools.md`、估值面补 `references/valuation-pricing.md`、资金面补 `references/fund-flow.md`；
+   - 跟踪指数估值分位可补 `bin/quant.py index-val <指数代码>`（PE/PB 百分位 + 关联 ETF，需广发 key；无 key 改 akshare/东财）；
+   - ETF 份额变化：`bin/quant.py capital-flow <code>` 或 akshare `fund_etf_category_sina` / `fund_etf_hist_em`（份额净流入是 ETF 资金面最直观指标）。
+2. **四维诊断（ETF 特化，每维给「偏多 / 中性 / 偏空」+ 关键证据，禁止空泛）**：
+   - **技术面（同个股）**：趋势（均线上下）+ MACD / RSI / KDJ 位置 + 量价 / 形态。ETF 价格即跟踪指数走势，技术信号直接可用。
+   - **估值面（按 ETF 类型分支，这是与个股最大差异点）**：
+     - 股票型 ETF（宽基 / 行业 / 主题 / 策略）→ 看**跟踪指数** PE/PB 历史分位（低位 = 安全边际）+ 同业对比
+     - 债券型 ETF → 利率方向 + 久期 + 到期收益率；利率下行周期通常利好债基
+     - 商品型 ETF（黄金等）→ 金价 / 实际利率 / 美元指数；避险升温通常利多
+     - 跨境 / QDII ETF → 海外估值分位 + **汇率** + **溢价率**（高溢价 = 回落风险，警惕追高）
+   - **资金面（ETF 核心指标）**：**ETF 份额变化（资金净流入最直观）** / 融资余额 / 换手率 / 北向（对 A 股 ETF）；份额持续流入 = 资金看好，流出 = 降温。
+   - **基本面（ETF 选品层，与个股完全不同）**：**跟踪误差 / 基金规模（流动性） / 折溢价率 / 管理费率 / 标的指数质量**——同名 ETF 优先选规模大、跟踪误差小、费率低、折溢价≈0 的；规模过小有清盘风险。
+3. **综合信号**：四维加权 → 落到明确一档 **买入 / 增持 / 持有 / 减仓 / 卖出**；附**置信度（高 / 中 / 低）**与「核心矛盾点」（如"指数估值低位但溢价率过高"）。
+4. **操作框架（条件化，非点位承诺）**：给「触发条件 → 动作 → 风控」——
+   - 例：`若跟踪指数 PE 分位 < 30% 且份额持续流入 → 分批 / 定投建仓；溢价率 > 5% 则等回落再进；单 ETF 仓位 ≤ X%`
+   - **禁止给无条件「现在就买 / 卖」指令**。ETF 特别提示：高溢价跨境 ETF 勿追高、商品 ETF 看实际利率拐点、债基看利率周期。
+5. 🔴 **CHECKPOINT · 输出前护栏**：结论前先列**前提**（当前市场环境 + 用户风险偏好 + 资金量 / 期限 + 是否定投），前提缺失主动追问；回复末尾**必附固定免责声明**（见上方「红线」模板），禁止改写 / 省略。
+
+> 输出结构建议：「结论卡（结论 + 置信度 + 矛盾点）+ 四维诊断表（估值面按 ETF 类型标注分支）+ 操作框架 + 免责声明」。ETF 买卖建议本质是"在指数估值 + 资金流向 + 折溢价 + 选品质量"四维上的择时，技术信号基于历史数据、不预测未来，建议仅作决策输入而非指令。
+
+## 引擎使用反模式（dim9 黑名单，禁止）
+
+- 禁止硬编码 / 凭记忆输出行情、财务、技术指标数字（红线已强调，引擎侧再强调一次）
+- 禁止把已废弃的百度K线(finance.pae.baidu.com)当作可用兜底层
+- 禁止所有源失败时静默返回空表，或用旧数据伪装成实时数据
+- 禁止未确认依赖就执行 `bin/quant.py`（akshare / mootdx 缺失 = 整层 RuntimeError）
+- 禁止对"北向/资金流"等已坏源假装取到数据——取空就显式声明缺口
+- **依赖**：`akshare / numpy / pandas / requests / pyyaml / mootdx`（见 `requirements.txt`）。建议在 Python 3.10–3.12 环境执行 `pip install -r requirements.txt`（当前 WorkBuddy 自带 Python 3.13 对 akshare 兼容性存疑）。
+- **配置**：`config.yaml` 含示例 API key（`EM_API_KEY` 东方财富妙想、`GF_SKILLS_APIKEY` 广发），可选；AI 分析功能可用环境变量 `EM_API_KEY` / `GF_SKILLS_APIKEY` 或改 config 配置。
+- **免责声明**：本工具仅供学习研究，不构成投资建议；技术分析基于历史数据不预测未来。

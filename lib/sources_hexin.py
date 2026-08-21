@@ -44,13 +44,22 @@ def get_north_flow(symbol='沪股通', days=10):
     data = r.json()
 
     items = data.get(code, []) or []
-    rows = []
-    for item in items[-days:]:
-        rows.append({
-            'date': item.get('date', ''),
-            'net_buy': float(item.get('value', 0) or 0),
-            'fund_flow': 0,
-            'leader': '',
-        })
 
-    return rows
+    # 旧结构: 日线 dict 列表 [{date, value}, ...]
+    if items and isinstance(items[0], dict):
+        rows = []
+        for item in items[-days:]:
+            rows.append({
+                'date': item.get('date', ''),
+                'net_buy': float(item.get('value', 0) or 0),
+                'fund_flow': 0,
+                'leader': '',
+            })
+        return rows
+
+    # 新结构(实测 2026-08): hgt/sgt 为分时数值列表，非日线序列
+    # → 该端点已不再提供日线北向，明确报错让上层改用 akshare / 东财 datacenter
+    raise RuntimeError(
+        "同花顺北向日线源结构已变更(返回分时数值序列)，"
+        "请改用 akshare 北向接口或东财 datacenter 获取日线北向资金"
+    )

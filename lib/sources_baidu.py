@@ -44,6 +44,9 @@ def get_kline(code, count=100, fqtype=1):
     r = requests.get(url, headers=_HEADERS, timeout=10,
                      proxies={'http': None, 'https': None})
     data = r.json()
+    # 实测该端点已返回 HTTP 200 + {"ResultCode":"403","Result":[]}，源已废弃
+    if r.status_code != 200 or str(data.get('ResultCode', '0')) not in ('0', 'None', ''):
+        raise RuntimeError(f"百度K线源已不可用(ResultCode={data.get('ResultCode')})，请改用腾讯/新浪")
 
     result = data.get('Result', []) or data.get('result', []) or []
     if not result:
