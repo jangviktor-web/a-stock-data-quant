@@ -106,6 +106,12 @@ K线数据:  新浪 → 腾讯 → mootdx → 百度 (四级降级)
 - **指数估值分位**: PE/PB百分位 + 低估/合理/高估评估 + 关联ETF
 - **财务对比**: 市值/PE/PB/行业均值/历史百分位
 
+### 同花顺金融数据服务（hithink-finance）集成
+
+- **iFinD 级权威源**：经 `HiThink-Tech/Financial-API` 融合，提供 A股行情/复权K线、财报三表、估值快照、集合竞价、指数/板块、公募基金(28端点)、特色数据(涨停跌停/异动/热榜/龙虎榜,11端点) 与全市场 Parquet 导出。
+- **四种接入**：CLI / MCP(4端点·55工具) / REST(59端点) / Python SDK，统一 Key `HITHINK_FINANCE_API_KEY`（fuyao.aicubes.cn 获取）。
+- **互补不替代**：配置 Key 时优先走 hithink（数据更全、含权威复权因子）；未配置回退引擎层。详见 `references/hithink-finance/`。
+
 ---
 
 ## 🎓 新手零基础快速上手

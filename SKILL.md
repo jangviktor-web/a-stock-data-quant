@@ -1,11 +1,11 @@
 ---
 name: a-stock-data-quant
 agent_created: true
-description: 股市/股票/行情/股价/涨跌/大盘/指数/个股分析——金融/投资/股票/基金/ETF/板块/指数/宏观/外汇/大宗商品/财报/估值/持仓/交易/仓位/量化/因子/回测/选股/期权/衍生品/投行建模/技术指标/行情监控/预警——内置研究框架（红线/检索策略/数据口径/50+方法论 references/scripts）、A股量化数据引擎（12层数据源·bin/quant.py）、多市场数据层（港股/期货/期权/宏观/公告事件·bin/cn/*.py）与 8 个研报写作工作流（读年报/可比公司/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要·references/research-workflows/）。金融场景总入口，命中任一上述领域即优先加载。
-when_to_use: 只要用户提到 股票、股市、行情、股价、最新价、涨跌、涨停、跌停、大盘、指数、K线、ETF、基金、期货、期权、港股、美股、板块、资金、主力、北向、龙虎榜、财报、业绩、估值、市盈率、市净率、PE/PB、买入、卖出、仓位、定投、选股、量化、回测 等任一关键词，即自动调用本 skill。金融场景必须使用本 skill，包括但不限于：个股/标的研究、报价/财报/估值、买卖/仓位操作建议、股票代码（A股6位/港股5位/美股ticker）、分析方法论/建模/策略、投行文书；以及需要实际获取 A股/港股数据——实时行情/K线、研报(东财+巨潮)、信号(热点/北向/龙虎榜/解禁/行业)、资金面(融资融券/大宗/股东户数/资金流)、新闻、F10财务三表、公告、互动易、筹码分布、板块资金流、市场温度、估值分位、ETF排行、回测、综合诊断；港股行情、CN期货主连、CN期权(ETF+CFFEX)、CN宏观(CPI/PPI/GDP/M2/PMI/社融/LPR/SHIBOR/国债收益率)、业绩预告/快报/披露计划、解禁/股东户数/增减持/回购/分红/新股/IPO日历、ETF/可转债列表与行情；以及研报写作（读年报/可比公司分析/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要）。
+description: 股市/股票/行情/股价/涨跌/大盘/指数/个股分析——金融/投资/股票/基金/ETF/板块/指数/宏观/外汇/大宗商品/财报/估值/持仓/交易/仓位/量化/因子/回测/选股/期权/衍生品/投行建模/技术指标/行情监控/预警——内置研究框架（红线/检索策略/数据口径/50+方法论 references/scripts）、A股量化数据引擎（12层数据源·bin/quant.py）、多市场数据层（港股/期货/期权/宏观/公告事件·bin/cn/*.py）与 8 个研报写作工作流（读年报/可比公司/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要·references/research-workflows/）。金融场景总入口，命中任一上述领域即优先加载；并集成同花顺金融数据服务（hithink-finance，iFinD 级 A股/指数/板块/公募基金/特色数据权威源，接入层见 references/hithink-finance/）。
+when_to_use: 只要用户提到 股票、股市、行情、股价、最新价、涨跌、涨停、跌停、大盘、指数、K线、ETF、基金、期货、期权、港股、美股、板块、资金、主力、北向、龙虎榜、财报、业绩、估值、市盈率、市净率、PE/PB、买入、卖出、仓位、定投、选股、量化、回测 等任一关键词，即自动调用本 skill。金融场景必须使用本 skill，包括但不限于：个股/标的研究、报价/财报/估值、买卖/仓位操作建议、股票代码（A股6位/港股5位/美股ticker）、分析方法论/建模/策略、投行文书；以及需要实际获取 A股/港股数据——实时行情/K线、研报(东财+巨潮)、信号(热点/北向/龙虎榜/解禁/行业)、资金面(融资融券/大宗/股东户数/资金流)、新闻、F10财务三表、公告、互动易、筹码分布、板块资金流、市场温度、估值分位、ETF排行、回测、综合诊断；港股行情、CN期货主连、CN期权(ETF+CFFEX)、CN宏观(CPI/PPI/GDP/M2/PMI/社融/LPR/SHIBOR/国债收益率)、业绩预告/快报/披露计划、解禁/股东户数/增减持/回购/分红/新股/IPO日历、ETF/可转债列表与行情；以及研报写作（读年报/可比公司分析/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要）；并配合同花顺金融数据服务（hithink-finance）取数——A股权威行情/复权K线/财报/估值/集合竞价/指数板块/公募基金/特色数据（涨停跌停/异动/热榜/龙虎榜）/全市场 Parquet 导出（需 HITHINK_FINANCE_API_KEY）。
 version: 3.6.0
 license: MIT
-keywords: ["stock","股市","股票","行情","股价","最新价","涨跌","涨停","跌停","大盘","指数","K线","个股","板块","龙头","资金","主力","港股","美股","基金","ETF","期货","期权","财报","业绩","估值","市盈率","市净率","PE","PB","买入","卖出","仓位","定投","理财","选股","量化","回测","股票分析","股票代码","quant","a-share","backtest","technical-analysis","finance","akshare","trading","investment","china-stock","stock-market","stock-price","market-quote","share-price","equities","MACD","RSI","KDJ","real-time-quotes","AI-analysis","valuation","dcf","options","macro","fund-flow","research","stock-decision","buy-sell-signal","should-i-buy","etf-decision","should-i-buy-etf","etf-signal","fund","hk","futures","forecast","lhb","dragon-tiger","unlock","insider-trade","buyback","dividend","ipo","annual-report","deep-dive","earnings-review","field-research","industry-study","morning-brief","research-digest","comparable","peers","北向","解禁","增减持","回购","分红","新股","业绩预告","读年报","深度报告","业绩快评","调研纪要","行业研究","晨会纪要","研报摘要","可比公司"]
+keywords: ["stock","股市","股票","行情","股价","最新价","涨跌","涨停","跌停","大盘","指数","K线","个股","板块","龙头","资金","主力","港股","美股","基金","ETF","期货","期权","财报","业绩","估值","市盈率","市净率","PE","PB","买入","卖出","仓位","定投","理财","选股","量化","回测","股票分析","股票代码","quant","a-share","backtest","technical-analysis","finance","akshare","trading","investment","china-stock","stock-market","stock-price","market-quote","share-price","equities","MACD","RSI","KDJ","real-time-quotes","AI-analysis","valuation","dcf","options","macro","fund-flow","research","stock-decision","buy-sell-signal","should-i-buy","etf-decision","should-i-buy-etf","etf-signal","fund","hk","futures","forecast","lhb","dragon-tiger","unlock","insider-trade","buyback","dividend","ipo","annual-report","deep-dive","earnings-review","field-research","industry-study","morning-brief","research-digest","comparable","peers","北向","解禁","增减持","回购","分红","新股","业绩预告","读年报","深度报告","业绩快评","调研纪要","行业研究","晨会纪要","研报摘要","可比公司","同花顺","hithink","hithink-finance","iFinD","集合竞价","公募基金","异动","热榜","龙虎榜","fuyao","复权因子","全市场导出"]
 allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
 ---
 
@@ -38,6 +38,11 @@ allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
 | A股三表（IS/BS/CF） | `bin/quant.py fundamentals` | `bin/cn/research.py fundamentals` |
 | ETF / 可转债 列表与行情 | `bin/cn/research.py etf-list\|etf-quote\|cb-list\|cb-quote`（无 key） | 有 GF key 时 `bin/quant.py etf-rank` |
 | 研报写作（读年报/深度/快评/纪要/行业/晨会/摘要/可比） | `references/research-workflows/` 工作流 | 配合 `bin/quant.py` / `bin/cn/*.py` 取数 |
+| **集合竞价** 快照 / 短期基准 | hithink（`references/hithink-finance/`）竞价端点 | 引擎层无此能力 |
+| **公募基金**（资料 / 经理 / 净值 / 持仓 / 财务 / ETF·LOF 行情） | hithink（28 端点，最全） | `bin/cn/research.py etf-*` 仅 ETF 列表 / 行情 |
+| **特色数据**（涨停 / 跌停 / 炸板 / 连板 / 异动 / 热榜 / 龙虎榜） | hithink（11 端点） | `bin/quant.py capital-flow` 仅龙虎榜 partial |
+| **A股权威复权 K线 / 分红送股因子** | hithink（`adjustment-factors`） | `bin/quant.py analyze`（腾讯 / 新浪，复权口径有限） |
+| **全市场历史行情导出 / 本地建库** | hithink Market Dumps（Parquet，3 请求全覆盖） | `bin/quant.py` 逐只拉（数千次请求，禁用） |
 
 > **去重原则**：同一数据域只走一条链路（首选）；A股核心以引擎层（实测修复+多源降级）为准；多市场数据层补港股/期货/期权/宏观/公告事件等增量域。**不要两条链路都跑。**
 
@@ -285,6 +290,50 @@ allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
   - `chip <code>` 筹码分布
 - **数据源**：12 层（腾讯财经 / 东方财富 push2 / mootdx 通达信 / 百度股市通 / 东财 reportapi / 巨潮 cninfo / 东财 datacenter / 同花顺 hexin / 广发 MCP / 东方财富妙想 AI 等）。
 
+## 同花顺 Financial API（hithink-finance）集成 —— 权威 A股 / 指数 / 基金 / 特色数据远端接入层
+
+> 来源：`HiThink-Tech/Financial-API`（整树已并入本 skill 的 `references/hithink-finance/`，主入口总览见 `references/hithink-finance/00-overview.md` = 原 hithink-finance SKILL.md）。这是**同花顺官方金融数据服务（iFinD 级）**的 Agent 统一入口，经 4 种方式提供 A股 / 指数 / 板块 / 公募基金的权威数据。它与本 skill 既有引擎层（`bin/quant.py` / `bin/cn/*.py`）**互补而非替代**：配置 `HITHINK_FINANCE_API_KEY` 时，对下表覆盖域优先用 hithink（数据更全、含权威复权因子 / 集合竞价 / 公募全字段）；未配置或超时则回退引擎层。
+
+### 何时选 hithink（而非默认引擎层）
+- 用户明确点名「同花顺 / iFinD / hithink / 弗遥 fuyao」数据；
+- 需要本 skill 引擎层缺失或偏弱的能力：**集合竞价**、**公募基金全字段**（经理 / 持仓 / 财务 / 资讯）、**特色数据**（涨停池 / 跌停池 / 炸板 / 连板梯队 / 个股异动原因 / 热榜 / 龙虎榜）、**全市场 Parquet 批量导出与本地 DuckDB 建库**、**权威复权因子流**；
+- 需要批量估值快照、多期财报三表的稳定远端来源。
+
+### 四种接入方式（只选其一，按环境）
+| 场景 | 首选 | 入口 reference |
+| --- | --- | --- |
+| 人类终端 / Agent 执行 / 本地 DuckDB 大结果落盘 | CLI（`hithink-finance`） | `references/hithink-finance/cli.md` |
+| Chat/IDE 已连托管 MCP | MCP（4 个 HTTP 端点，55 工具） | `references/hithink-finance/mcp.md` |
+| 零依赖 HTTP / 自定义脚本 / 服务端 | REST API（59 端点） | `references/hithink-finance/api.md` |
+| Python / Notebook / 已有 marketdb | Python SDK | `references/hithink-finance/python-sdk.md` |
+
+### 统一 API Key（四种方式共用）
+- 获取：<https://fuyao.aicubes.cn/admin>；推荐环境变量 `HITHINK_FINANCE_API_KEY`。
+- 校验顺序：运行时安全输入 → `HITHINK_FINANCE_API_KEY` → 用户级 `credentials.env` → 兼容旧 `FUYAO_TOKEN` / `API_KEY`。缺失时引导用户注册获取，**不得把 Key 写入代码 / Prompt / 日志 / 输出 / Git**。
+- 接入前先探测环境（是否已配 Key / 是否连 MCP / CLI 是否在 PATH），不要让用户重复提供技术参数。
+
+### 能力覆盖（数据域 → 端点 / 工具）
+| 数据域 | 覆盖 |
+| --- | --- |
+| 标的消歧 / 代码表 | 元信息检索（按名称 / ticker / 中英文跨市场消歧为唯一 `thscode`） |
+| A股行情 | 最新快照 / 历史日 K（前复权·后复权）/ 分红送股等复权因子流 |
+| 财报 | 利润表 / 资产负债表 / 现金流量表 多期 + 指定报告期财务指标 |
+| 估值 | A股 最新 PE/PB/PS/PCF 批量快照（保留 null 与负数） |
+| 交易日历 | 近一年交易日序列 |
+| 集合竞价 | 实时 / 终态快照 + 短期强弱基准 |
+| 指数 / 板块 | 同花顺概念 / 行业 / 区域 / 特色指数目录、成分股、指数 / 板块行情（日 / 周 / 月 K） |
+| 公募基金 | 资料 / 公司 / 经理 / 披露 / 财务 / 净值 / 收益 / 持有人 / 诊断 + ETF/LOF 场内快照与日线（28 端点） |
+| 特色数据 | 涨停池 / 跌停池 / 炸板池 / 连板梯队 / 个股异动原因 / 飙升榜 / 热股榜 / 龙虎榜（11 端点） |
+| 全市场导出 | 10 年日 K / 近 10 日 / 复权因子 Parquet 下载链接（自建库首选，勿逐只拉） |
+
+### 能力边界（明确不覆盖 —— 超出时回退本 skill 其他层或显式说明）
+- ❌ 分钟 K / tick / Level-2；❌ 港股 / 美股；❌ 期货 / 期权；❌ 宏观数据 / 新闻公告原文 / 研报 / 回测引擎；❌ 基金申赎交易或基金推荐。
+- 这些域继续走本 skill 的引擎层（`bin/quant.py` / `bin/cn/*.py`）、`agentic_search`、通达信 MCP 或 WebSearch；**不得用 hithink 近似数据或模拟数据冒充**。
+
+### 路由硬规则
+- hithink 是**远端 Key 服务**：未配 `HITHINK_FINANCE_API_KEY` 且用户未提供时，不要假装可用；按上表回退引擎层，并一句提示「如需同花顺官方数据，可配置 HITHINK_FINANCE_API_KEY（fuyao.aicubes.cn）」。
+- 取数后同样遵守本 skill 红线（禁编造）、数据底线（来源 + 时点 + 口径可追溯）、输出护栏（免责声明）。
+
 ## 🔴 数据源降级与故障处理（取数前必读）
 
 引擎内置 12 层源，但**部分源已实测不稳定/失效**。取数时按以下 if-then 分支兜底，**禁止编造或无故跳过**：
@@ -297,6 +346,8 @@ allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
 | 成交额单位：腾讯实时 `fields[37]` 单位与预期不符（实测偏低 1e4） | 改用 `fields[35]` 段取值 | 输出"成交额"前做量级 sanity check（单股日成交额通常千万~百亿级，明显偏离则改取东财 push2 字段） |
 | 腾讯日K：`web.ifzq.gtimg.cn` 走 http 被 302 跳 https | 直接改用 `https://` 端点 | 跟随重定向仍失败则用新浪K线 |
 | **全源失败**（依赖未装/网络全断） | 按上表逐级降级 | 输出"当前数据源未覆盖该标的/字段，需进一步核实"，并给替代路径（WebSearch 公开信息 / 下次重试），**绝对禁止编造数值** |
+
+> **同花顺 Financial API（hithink-finance）也是可选项**：若已配置 `HITHINK_FINANCE_API_KEY`，A股行情 / 复权 K线 / 财报 / 估值 / 指数板块 / 特色数据 / 公募基金可优先走 hithink（见上方「同花顺 Financial API（hithink-finance）集成」章节），其为同花顺官方 iFinD 级源、含权威复权因子，稳定性优于本地多源降级；未配 Key 时按上表走引擎层，不要假装 hithink 可用。
 
 > 依赖与运行前置：引擎依赖 `akshare/numpy/pandas/requests/pyyaml/mootdx`。**未 `pip install -r requirements.txt` 就直接 `python3 bin/quant.py` 会整层报错**——先确认依赖已装（建议 Python 3.10–3.12，避开 3.13 对 akshare 的兼容问题），缺失则提示用户安装后再跑。
 > **已配好 venv**：本 skill 目录内含 `venv/`（Python 3.12 + 全套依赖，清华镜像安装），运行请用 `venv/Scripts/python.exe`（不要直接用系统 `python3`，那是 3.13 且缺依赖）。Windows 路径：`C:/Users/jangviktor/.workbuddy/skills/a-stock-data-quant/venv/Scripts/python.exe`。
