@@ -1,11 +1,11 @@
 ---
 name: a-stock-data-quant
 agent_created: true
-description: 股市/股票/行情/股价/涨跌/大盘/指数/个股分析——金融/投资/股票/基金/ETF/板块/指数/宏观/外汇/大宗商品/财报/估值/持仓/交易/仓位/量化/因子/回测/选股/期权/衍生品/投行建模/技术指标/行情监控/预警——内置研究框架（红线/检索策略/数据口径/50+方法论 references/scripts）、A股量化数据引擎（12层数据源·bin/quant.py）、多市场数据层（港股/期货/期权/宏观/公告事件·bin/cn/*.py）与 8 个研报写作工作流（读年报/可比公司/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要·references/research-workflows/）。金融场景总入口，命中任一上述领域即优先加载；并集成同花顺金融数据服务（hithink-finance，iFinD 级 A股/指数/板块/公募基金/特色数据权威源，接入层见 references/hithink-finance/）。
-when_to_use: 只要用户提到 股票、股市、行情、股价、最新价、涨跌、涨停、跌停、大盘、指数、K线、ETF、基金、期货、期权、港股、美股、板块、资金、主力、北向、龙虎榜、财报、业绩、估值、市盈率、市净率、PE/PB、买入、卖出、仓位、定投、选股、量化、回测 等任一关键词，即自动调用本 skill。金融场景必须使用本 skill，包括但不限于：个股/标的研究、报价/财报/估值、买卖/仓位操作建议、股票代码（A股6位/港股5位/美股ticker）、分析方法论/建模/策略、投行文书；以及需要实际获取 A股/港股数据——实时行情/K线、研报(东财+巨潮)、信号(热点/北向/龙虎榜/解禁/行业)、资金面(融资融券/大宗/股东户数/资金流)、新闻、F10财务三表、公告、互动易、筹码分布、板块资金流、市场温度、估值分位、ETF排行、回测、综合诊断；港股行情、CN期货主连、CN期权(ETF+CFFEX)、CN宏观(CPI/PPI/GDP/M2/PMI/社融/LPR/SHIBOR/国债收益率)、业绩预告/快报/披露计划、解禁/股东户数/增减持/回购/分红/新股/IPO日历、ETF/可转债列表与行情；以及研报写作（读年报/可比公司分析/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要）；公共信息源不可用时，可经用户确认启用同花顺金融数据服务（hithink-finance）作为备用源——A股权威行情/复权K线/财报/估值/集合竞价/指数板块/公募基金/特色数据（涨停跌停/异动/热榜/龙虎榜）/全市场 Parquet 导出（API Key 获取：fuyao.aicubes.cn，需用户同意并发送给 Agent 后方可启用）。
-version: 3.6.0
+description: 股市/股票/行情/股价/涨跌/大盘/指数/个股分析——金融/投资/股票/基金/ETF/板块/指数/宏观/外汇/大宗商品/财报/估值/持仓/交易/仓位/量化/因子/回测/选股/期权/衍生品/投行建模/技术指标/行情监控/预警——内置研究框架（红线/检索策略/数据口径/50+方法论 references/scripts）、A股量化数据引擎（12层数据源·bin/quant.py）、多市场数据层（港股/期货/期权/宏观/公告事件·bin/cn/*.py）与 8 个研报写作工作流（读年报/可比公司/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要·references/research-workflows/）。金融场景总入口，命中任一上述领域即优先加载；并集成同花顺金融数据服务（hithink-finance，iFinD 级 A股/指数/板块/公募基金/特色数据权威源，接入层见 references/hithink-finance/）；并集成东方财富·妙想（mx-skills，全市场含港股/美股/债券/基金/全球宏观/资讯研报的备用数据接入层，见 references/mx-skills/）。
+when_to_use: 只要用户提到 股票、股市、行情、股价、最新价、涨跌、涨停、跌停、大盘、指数、K线、ETF、基金、期货、期权、港股、美股、板块、资金、主力、北向、龙虎榜、财报、业绩、估值、市盈率、市净率、PE/PB、买入、卖出、仓位、定投、选股、量化、回测 等任一关键词，即自动调用本 skill。金融场景必须使用本 skill，包括但不限于：个股/标的研究、报价/财报/估值、买卖/仓位操作建议、股票代码（A股6位/港股5位/美股ticker）、分析方法论/建模/策略、投行文书；以及需要实际获取 A股/港股数据——实时行情/K线、研报(东财+巨潮)、信号(热点/北向/龙虎榜/解禁/行业)、资金面(融资融券/大宗/股东户数/资金流)、新闻、F10财务三表、公告、互动易、筹码分布、板块资金流、市场温度、估值分位、ETF排行、回测、综合诊断；港股行情、CN期货主连、CN期权(ETF+CFFEX)、CN宏观(CPI/PPI/GDP/M2/PMI/社融/LPR/SHIBOR/国债收益率)、业绩预告/快报/披露计划、解禁/股东户数/增减持/回购/分红/新股/IPO日历、ETF/可转债列表与行情；以及研报写作（读年报/可比公司分析/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要）；公共信息源不可用时，可经用户确认启用同花顺金融数据服务（hithink-finance）作为备用源——A股权威行情/复权K线/财报/估值/集合竞价/指数板块/公募基金/特色数据（涨停跌停/异动/热榜/龙虎榜）/全市场 Parquet 导出（API Key 获取：fuyao.aicubes.cn，需用户同意并发送给 Agent 后方可启用）；公共信息源不可用时，亦可经用户确认启用东方财富·妙想（mx-skills）作为备用源——港股/美股/债券/全球宏观(GDP/CPI/PMI/M2/汇率/商品)/资讯·公告·券商研报/智能选股（经脚本内联授权获取 EM_API_KEY，需用户同意并授权后方可启用）。
+version: 3.8.0
 license: MIT
-keywords: ["stock","股市","股票","行情","股价","最新价","涨跌","涨停","跌停","大盘","指数","K线","个股","板块","龙头","资金","主力","港股","美股","基金","ETF","期货","期权","财报","业绩","估值","市盈率","市净率","PE","PB","买入","卖出","仓位","定投","理财","选股","量化","回测","股票分析","股票代码","quant","a-share","backtest","technical-analysis","finance","akshare","trading","investment","china-stock","stock-market","stock-price","market-quote","share-price","equities","MACD","RSI","KDJ","real-time-quotes","AI-analysis","valuation","dcf","options","macro","fund-flow","research","stock-decision","buy-sell-signal","should-i-buy","etf-decision","should-i-buy-etf","etf-signal","fund","hk","futures","forecast","lhb","dragon-tiger","unlock","insider-trade","buyback","dividend","ipo","annual-report","deep-dive","earnings-review","field-research","industry-study","morning-brief","research-digest","comparable","peers","北向","解禁","增减持","回购","分红","新股","业绩预告","读年报","深度报告","业绩快评","调研纪要","行业研究","晨会纪要","研报摘要","可比公司","同花顺","hithink","hithink-finance","iFinD","集合竞价","公募基金","异动","热榜","龙虎榜","fuyao","复权因子","全市场导出"]
+keywords: ["stock","股市","股票","行情","股价","最新价","涨跌","涨停","跌停","大盘","指数","K线","个股","板块","龙头","资金","主力","港股","美股","基金","ETF","期货","期权","财报","业绩","估值","市盈率","市净率","PE","PB","买入","卖出","仓位","定投","理财","选股","量化","回测","股票分析","股票代码","quant","a-share","backtest","technical-analysis","finance","akshare","trading","investment","china-stock","stock-market","stock-price","market-quote","share-price","equities","MACD","RSI","KDJ","real-time-quotes","AI-analysis","valuation","dcf","options","macro","fund-flow","research","stock-decision","buy-sell-signal","should-i-buy","etf-decision","should-i-buy-etf","etf-signal","fund","hk","futures","forecast","lhb","dragon-tiger","unlock","insider-trade","buyback","dividend","ipo","annual-report","deep-dive","earnings-review","field-research","industry-study","morning-brief","research-digest","comparable","peers","北向","解禁","增减持","回购","分红","新股","业绩预告","读年报","深度报告","业绩快评","调研纪要","行业研究","晨会纪要","研报摘要","可比公司","同花顺","hithink","hithink-finance","iFinD","集合竞价","公募基金","异动","热榜","龙虎榜","fuyao","复权因子","全市场导出","东方财富","妙想","miaoxiang","EM_API_KEY","债券","可转债","资讯","研报","公告","政策","选股","mx-finance-data","mx-finance-search","mx-macro-data","mx-stocks-screener","screener"]
 allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
 ---
 
@@ -43,6 +43,11 @@ allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
 | **特色数据**（涨停 / 跌停 / 炸板 / 连板 / 异动 / 热榜 / 龙虎榜） | `bin/quant.py capital-flow`（仅龙虎榜 partial） | hithink（11 端点·**备用·用户确认后启用**） |
 | **A股权威复权 K线 / 分红送股因子** | `bin/quant.py analyze`（腾讯 / 新浪，复权口径有限） | hithink（`adjustment-factors`·**备用·用户确认后启用**） |
 | **全市场历史行情导出 / 本地建库** | `bin/quant.py` 逐只拉（数千次请求，不推荐） | hithink Market Dumps（Parquet·**备用·用户确认后启用**） |
+| **港股 / 美股 行情 / 财务 / 估值** | `bin/cn/equity.py quote 00700\|history`（东财116.*，港股限价量） | 妙想 `mx-finance-data`（**备用·用户确认后启用**，全市场含港美/债券/基金，自然语义问句查询） |
+| **债券 / 可转债 / 非上市主体** 数据 | `bin/cn/research.py cb-*` | 妙想 `mx-finance-data`（**备用·用户确认后启用**） |
+| **全球宏观**（GDP/CPI/PPI/PMI/M2/社融/汇率/商品价格） | `bin/cn/macro.py`（CN 口径） | 妙想 `mx-macro-data`（**备用·用户确认后启用**，多国/地区+商品） |
+| **资讯 / 公告 / 券商研报 / 政策** | `agentic_search` / WebSearch / 引擎层公告事件 | 妙想 `mx-finance-search`（**备用·用户确认后启用**） |
+| **智能选股 / 条件筛选** | `bin/quant.py` 量化筛选 | 妙想 `mx-stocks-screener`（**备用·用户确认后启用**） |
 
 > **去重原则**：同一数据域只走一条链路（首选）；A股核心以引擎层（实测修复+多源降级）为准；多市场数据层补港股/期货/期权/宏观/公告事件等增量域。**不要两条链路都跑。**
 
@@ -368,6 +373,73 @@ allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
 > | 全市场 10 年日K / 近10日 / 复权事件 Parquet 签名端点 | PASS（×3 均返回有效预签名 URL，约 5 分钟有效；按约定未下载大文件） |
 > **合计 18/18 PASS**。已知小瑕疵（上游数据，非契约违约）：指数快照 `ticker` 对沪深300返回 `1B0300`（应以 `thscode` 为唯一键）。Key 仅运行时内存传入（env），未落盘 / 未进 Git / 未进日志。
 
+## 东方财富·妙想（mx-skills）集成 —— 港美 / 债券 / 宏观 / 资讯 / 研报 / 选股 备用接入层
+
+> 来源：`mx-skills`（东方财富·妙想大模型，zip 内共 33 个 skill；本 skill **仅并入其中 4 个数据原语**，其余 ~29 个研报生成器与 `references/research-workflows/` 重复，未并入以免臃肿）。4 个原语位于 `references/mx-skills/{mx-finance-data,mx-finance-search,mx-macro-data,mx-stocks-screener}/`，各自含 `scripts/get_data.py` 与 `references/auth_protocol.md`。**定位：本 skill 的「备用信息源」，与 hithink 互补**——hithink 补 A股/指数/基金/特色，妙想补 hithink 不覆盖的 **港股 / 美股 / 债券 / 全球宏观 / 资讯·公告·研报 / 智能选股**。默认优先走公共信息源（引擎层 / `agentic_search` / 通达信 MCP / WebSearch）；仅当公共源不可用 / 覆盖不足、且**用户明确同意启用**时，才回退到妙想继续取数。
+
+### 何时启用 妙想（备用条件 · 需用户确认）
+- 需要 **港股 / 美股 / 债券** 行情·财务·估值，且公共源（东财116.* via `bin/cn`、 `agentic_search`）覆盖不足或失败；
+- 需要 **全球宏观**（多国/地区 GDP/CPI/PMI/M2/汇率/商品），超出 `bin/cn/macro.py` 的 CN 口径；
+- 需要 **资讯 / 公告 / �商研报 / 政策** 原文聚合，公共源补不到；
+- 需要 **智能选股 / 条件筛选**；
+- 用户主动点名「用东方财富 / 妙想 / 妙想大模型数据」并已完成授权。
+> ⚠️ **越级禁止**：公共源可用时，**不得**跳过公共源直接走妙想；妙想仅在「公共源失败 + 用户同意」的降级链路上启用。
+
+### 四个数据原语（入口脚本）
+| 原语 | 能力 | 入口 |
+| --- | --- | --- |
+| `mx-finance-data` | 全市场自然语言查数（A股/港股/美股/ETF/债券/基金；实时/财务/估值），输出 xlsx + md | `references/mx-skills/mx-finance-data/scripts/get_data.py --query "..." --indicators "..."` |
+| `mx-finance-search` | 资讯/公告/研报/政策检索，输出 txt | `references/mx-skills/mx-finance-search/scripts/get_data.py "..."` |
+| `mx-macro-data` | 全球宏观自然语言查数，输出 csv + 描述 txt | `references/mx-skills/mx-macro-data/scripts/get_data.py --query "..."` |
+| `mx-stocks-screener` | 智能选股 / 条件筛选 | `references/mx-skills/mx-stocks-screener/scripts/get_data.py "..."` |
+
+### 统一授权（EM_API_KEY · 内联 consent gate）
+- 依赖 `EM_API_KEY` 环境变量（或 `~/.mx-skills/em_api_key`）。**不得硬编码 Key**——上游原文件曾内嵌泄露 Key，本 skill 已**全部 scrub 为 `""`**，缺失时脚本打印 `need_auth: true` + `authUrl:`（扫码）+ `apiKeyUrl:`（获取地址）并以退出码 10 停下，由用户完成授权。
+- **获取 / 授权地址以脚本运行时打印的 `apiKeyUrl:` 为准**（东方财富妙想平台）；用户授权后会话自带 `EM_API_KEY`，Agent 仅作为当前进程环境变量注入，**不向用户展示 / 复述 / 写入文件 / Git**。
+- 依赖：`pip install httpx pandas openpyxl`（见各 `requirements.txt`）。
+- 401 失效：按 `references/mx-skills/*/references/auth_protocol.md` 清理失效凭据并重生成授权链接。
+
+### 能力覆盖（数据域 → 原语）
+| 数据域 | 覆盖 |
+| --- | --- |
+| 全市场标的 | A股/港股/美股/ETF/债券/基金/非上市主体，自然语义实体识别 |
+| 行情 / 财务 / 估值 | 实时价/涨跌幅/盘口、报表(IS/BS/CF)、PE/PB/PS 等 |
+| 全球宏观 | GDP/CPI/PPI/PMI/失业率/工业增加值、M1/M2/社融/国债利率/汇率、商品价格(黄金/原油/铜/稀土) |
+| 资讯 / 研报 | 公告/事件/券商研报/政策/舆情，优先 `llmSearchResponse` |
+| 选股 | 技术面/基本面/消息面复合条件筛选 |
+
+### 能力边界（明确不覆盖 —— 超出时回退本 skill 其他层或显式说明）
+- 妙想是**远端 Key 服务 + 备用源**，不是 A股首选（A股首选仍是引擎层 / hithink）；
+- 不覆盖：A股分钟 K / tick / Level-2 实时盘口深度（引擎层 / 通达信更优）、回测引擎；
+- 超出时继续走引擎层 / `agentic_search` / 通达信 MCP / WebSearch，**不得用妙想近似数据冒充 A股首选或编造**。
+
+### 🔴 降级启用流程（用户确认门 · 公共源失败时的入口，与 hithink 同源）
+当公共源不可用 / 覆盖不足且任务需妙想才能满足时，严格按以下 if-then 链路走，**不得静默切换**：
+1. **判断**：公共源是否确实失败/缺失？是 → 第2步；否 → 继续公共源，不提妙想。
+2. **询问 + 告知获取地址（🔴 必须显式问用户）**：
+   > 「当前公共数据源暂不可用/覆盖不足。是否启用**东方财富·妙想（mx-skills）**作为备用源？如需启用，运行对应 `scripts/get_data.py` 会在未授权时打印 `apiKeyUrl:`（妙想平台获取/授权地址），完成授权后把会话 `EM_API_KEY` 交给我，我注入后继续取数。不启用也可，我会按红线说明『当前数据源未覆盖，需进一步核实』，不会编造数据。」
+3. **分支**：用户**授权**（确认 `EM_API_KEY`）→ 注入环境变量后按上方原语继续取数；用户**拒绝/无 Key** → 按红线输出「数据源未覆盖」，给替代路径，**绝对禁止编造**。
+4. **继续**：取数后同样遵守红线/数据底线/免责声明。
+
+### 路由硬规则
+- 妙想是**远端 Key 服务 + 备用源**：公共源可用时默认不走；公共源失败且**用户确认启用**后才进入降级流程。
+- **未获用户同意不得静默切到妙想、不得假装可用、不得编造或复用旧 Key**；用户授权前按红线给「数据源未覆盖」结论。
+- 上游脚本曾内嵌泄露 Key，本 skill 已 scrub；**运行依赖务必从私有持久存储/授权流程获取 EM_API_KEY，绝不硬编码或复用打包内的默认 Key**。
+
+### 反例黑名单（不要做什么）
+- ❌ 公共源可用时越级用妙想；
+- ❌ 未问用户、未给获取地址就声称「已切换到妙想」；
+- ❌ 把 `EM_API_KEY` 写入代码/Prompt/日志/输出/Git，或复述用户授权值；
+- ❌ 用户无 Key 时编造妙想数据或旧价冒充实时；
+- ❌ 把妙想非首选的域（A股分钟 K/L2/回测）冒充可查，或把它当 A股首选绕过引擎层；
+- ❌ 使用上游泄露的默认 Key（已 scrub，若脚本提示 `EM_API_KEY` 来自打包默认值即视为违规）。
+
+### 实测验证（Dim8 · 多维度 live test）
+> 尚未用真实 `EM_API_KEY` 跑 live test（用户未提供 Key，且 consent gate 设计上需先授权）。已完成的把关：
+> - **代码审计**：4 个原语的 7 个 `.py` 文件均含上游泄露的硬编码 `EM_API_KEY` 默认，已全部 scrub 为 `""`（verify: 0 残留），确保 consent gate 是唯一取数路径；
+> - **结构校验**：4 个原语及 `references/auth_protocol.md` 已并入 `references/mx-skills/`，相对链接（`references/auth_protocol.md`）自洽；
+> - 待用户授权 `EM_API_KEY` 后，可补一轮 live test（参照 hithink 的维度：元信息/行情/财务/估值/宏观/资讯/选股），届时记入 `results.tsv`。
+
 ## 🔴 数据源降级与故障处理（取数前必读）
 
 引擎内置 12 层源，但**部分源已实测不稳定/失效**。取数时按以下 if-then 分支兜底，**禁止编造或无故跳过**：
@@ -382,6 +454,8 @@ allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
 | **全源失败**（依赖未装/网络全断） | 按上表逐级降级 | 输出"当前数据源未覆盖该标的/字段，需进一步核实"，并给替代路径（WebSearch 公开信息 / 下次重试），**绝对禁止编造数值** |
 
 > **同花顺 Financial API（hithink-finance）是「备用信息源」**：默认优先走公共源（引擎层 / `agentic_search` / 通达信 MCP / WebSearch）。仅当**公共源全失败或覆盖不足**且**用户明确同意启用**时，才走 hithink（见上方「同花顺 Financial API（hithink-finance）集成」章节的「🔴 降级启用流程」）：先问用户是否启用、告知 Key 获取地址 <https://fuyao.aicubes.cn/admin>、用户发来 Key 后再继续取数。其为同花顺官方 iFinD 级源、含权威复权因子；**未获用户同意前不得假装可用或静默切换**。
+
+> **东方财富·妙想（mx-skills）同为「备用信息源」**，与 hithink 互补（补港美/债券/宏观/资讯研报/选股）：默认优先走公共源；仅当**公共源全失败或覆盖不足**且**用户明确同意启用**时，才走妙想（见「东方财富·妙想（mx-skills）集成」章节的「🔴 降级启用流程」）。其依赖 `EM_API_KEY`，未授权时脚本打印 `apiKeyUrl:` 获取/授权地址、由用户完成授权后注入；**未获用户同意前不得假装可用或静默切换，且严禁使用上游泄露的硬编码默认 Key（本 skill 已全部 scrub）**。
 
 > 依赖与运行前置：引擎依赖 `akshare/numpy/pandas/requests/pyyaml/mootdx`。**未 `pip install -r requirements.txt` 就直接 `python3 bin/quant.py` 会整层报错**——先确认依赖已装（建议 Python 3.10–3.12，避开 3.13 对 akshare 的兼容问题），缺失则提示用户安装后再跑。
 > **已配好 venv**：本 skill 目录内含 `venv/`（Python 3.12 + 全套依赖，清华镜像安装），运行请用 `venv/Scripts/python.exe`（不要直接用系统 `python3`，那是 3.13 且缺依赖）。Windows 路径：`C:/Users/jangviktor/.workbuddy/skills/a-stock-data-quant/venv/Scripts/python.exe`。

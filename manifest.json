@@ -1,10 +1,10 @@
 {
   "name": "a-stock-data-quant",
-  "version": "3.7.0",
-  "description": "金融研究框架 + A股量化数据引擎 + 多市场数据层(港股/期货/期权/宏观/公告事件) + 研报写作工作流×8 整合版 - 红线/检索策略/数据口径/50+方法论 references/投行 scripts，以及技术指标、形态识别、策略回测、综合诊断、市场热点、HTML图表、实时行情(腾讯/东方财富/通达信/百度)、AI金融分析(东方财富妙想)、同花顺金融数据服务(hithink-finance, iFinD级 A股/指数/基金/特色数据权威源·references/hithink-finance/)",
+  "version": "3.8.0",
+  "description": "金融研究框架 + A股量化数据引擎 + 多市场数据层(港股/期货/期权/宏观/公告事件) + 研报写作工作流×8 整合版 - 红线/检索策略/数据口径/50+方法论 references/投行 scripts，以及技术指标、形态识别、策略回测、综合诊断、市场热点、HTML图表、实时行情(腾讯/东方财富/通达信/百度)、AI金融分析(东方财富妙想)、同花顺金融数据服务(hithink-finance, iFinD级 A股/指数/基金/特色数据权威源·references/hithink-finance/)、东方财富·妙想(mx-skills 4数据原语·港美/债券/宏观/资讯研报/选股备用源·references/mx-skills/)",
   "author": "基于 mpquant/MyTT, mpquant/Ashare, KlangAlpha/Klang, ScottZt/jin-ce-zhi-suan, johncui9392/Aeolus 等开源项目构建",
   "license": "MIT",
-  "changelog": "v2.0.0 - 基于 stock-quant 优化：添加 HTML 图表输出、数据缓存、配置管理、编码修复；v3.7.0 - 融合同花顺金融数据服务 hithink-finance（iFinD 级 A股/指数/基金/特色数据权威源，CLI/MCP/REST/Python SDK 4 接入方式，整树并入 references/hithink-finance/，路由矩阵与降级章节同步）",
+  "changelog": "v2.0.0 - 基于 stock-quant 优化：添加 HTML 图表输出、数据缓存、配置管理、编码修复；v3.7.0 - 融合同花顺金融数据服务 hithink-finance（iFinD 级 A股/指数/基金/特色数据权威源，CLI/MCP/REST/Python SDK 4 接入方式，整树并入 references/hithink-finance/，路由矩阵与降级章节同步）；v3.8.0 - 融入东方财富·妙想 mx-skills 4 个数据原语（mx-finance-data/mx-finance-search/mx-macro-data/mx-stocks-screener）作为港美/债券/宏观/资讯研报/选股备用源（与 hithink 互补），整树并入 references/mx-skills/，scrub 上游硬编码 EM_API_KEY 默认、统一 consent gate（need_auth+apiKeyUrl），路由矩阵与降级章节同步",
   "skills": [
     {
       "name": "a-stock-data-quant",

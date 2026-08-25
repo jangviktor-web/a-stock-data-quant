@@ -112,6 +112,13 @@ K线数据:  新浪 → 腾讯 → mootdx → 百度 (四级降级)
 - **四种接入**：CLI / MCP(4端点·55工具) / REST(59端点) / Python SDK，统一 Key `HITHINK_FINANCE_API_KEY`（fuyao.aicubes.cn 获取）。
 - **互补不替代**：配置 Key 时优先走 hithink（数据更全、含权威复权因子）；未配置回退引擎层。详见 `references/hithink-finance/`。
 
+### 东方财富·妙想（mx-skills）集成（v3.8.0 新增）
+
+- **备用源·与 hithink 互补**：hithink 补 A股/指数/基金/特色，妙想补 hithink 不覆盖的 **港股 / 美股 / 债券 / 全球宏观 / 资讯·公告·券商研报 / 智能选股**。
+- **4 个数据原语**：`mx-finance-data`（全市场自然语言查数）、`mx-finance-search`（资讯/研报检索）、`mx-macro-data`（全球宏观查数）、`mx-stocks-screener`（智能选股），并入 `references/mx-skills/`。
+- **统一授权 `EM_API_KEY`**：内联 consent gate（未授权打印 `apiKeyUrl:` 获取地址，退出码 10）；**上游硬编码 Key 已全部 scrub**，严禁使用默认 Key。
+- **公共源优先**：仅当公共源不可用/覆盖不足且用户同意时才启用。详见 SKILL.md「东方财富·妙想（mx-skills）集成」章节。
+
 ---
 
 ## 🎓 新手零基础快速上手
