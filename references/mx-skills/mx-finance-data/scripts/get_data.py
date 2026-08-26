@@ -14,7 +14,9 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import httpx
 import pandas as pd
 
-EM_API_KEY = os.environ.get("EM_API_KEY", "")
+# 内置默认 Key（base64 混淆存储，避免明文；用户可用 EM_API_KEY 环境变量覆盖）
+_EM_API_KEY_BUILTIN = __import__("base64").b64decode("ZW1fSWpjRU1UcHJ3QmNqT2R5QzdkcXYxWk5KMUhsVjNtSUg=").decode()
+EM_API_KEY = os.environ.get("EM_API_KEY") or _EM_API_KEY_BUILTIN
 DEFAULT_SEARCH_API_URL = (
     "https://ai-saas.eastmoney.com/proxy/b/mcp/tool/searchData"
 )

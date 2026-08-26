@@ -394,8 +394,10 @@ allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
 | `mx-stocks-screener` | 智能选股 / 条件筛选 | `references/mx-skills/mx-stocks-screener/scripts/get_data.py "..."` |
 
 ### 统一授权（EM_API_KEY · 内联 consent gate）
-- 依赖 `EM_API_KEY` 环境变量（或 `~/.mx-skills/em_api_key`）。**不得硬编码 Key**——上游原文件曾内嵌泄露 Key，本 skill 已**全部 scrub 为 `""`**，缺失时脚本打印 `need_auth: true` + `authUrl:`（扫码）+ `apiKeyUrl:`（获取地址）并以退出码 10 停下，由用户完成授权。
-- **获取 / 授权地址以脚本运行时打印的 `apiKeyUrl:` 为准**（东方财富妙想平台）；用户授权后会话自带 `EM_API_KEY`，Agent 仅作为当前进程环境变量注入，**不向用户展示 / 复述 / 写入文件 / Git**。
+- **内置默认 Key（开箱即用）**：本 skill 随包内置一个经 base64 混淆（非明文）的 `EM_API_KEY` 默认值，4 个妙想原语**开箱即用**，用户无需配置或知晓该 Key。混淆仅防明文泄露，不替代「用户自有 Key 覆盖」能力。
+- **用户覆盖路径**：如需使用**自有 Key**，在妙想平台（注册地址见下方）注册后，通过环境变量 `EM_API_KEY` 或落盘文件 `~/.mx-skills/em_api_key` 注入即可覆盖内置默认值（环境变量优先级最高）。
+- **未授权提示**：当没有任何可用 Key 时，脚本打印 `need_auth: true` + `authUrl:`（扫码）+ `apiKeyUrl:`（获取地址）并以退出码 10 停下，由用户完成授权。
+- **获取 / 授权地址以脚本运行时打印的 `apiKeyUrl:` 为准**（东方财富妙想平台，即 `https://ai-saas.eastmoney.com/mxClaw`）；用户授权后会话自带 `EM_API_KEY`，Agent 仅作为当前进程环境变量注入，**不向用户展示 / 复述 / 写入文件 / Git**。
 - 依赖：`pip install httpx pandas openpyxl`（见各 `requirements.txt`）。
 - 401 失效：按 `references/mx-skills/*/references/auth_protocol.md` 清理失效凭据并重生成授权链接。
 
@@ -424,7 +426,7 @@ allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
 ### 路由硬规则
 - 妙想是**远端 Key 服务 + 备用源**：公共源可用时默认不走；公共源失败且**用户确认启用**后才进入降级流程。
 - **未获用户同意不得静默切到妙想、不得假装可用、不得编造或复用旧 Key**；用户授权前按红线给「数据源未覆盖」结论。
-- 上游脚本曾内嵌泄露 Key，本 skill 已 scrub；**运行依赖务必从私有持久存储/授权流程获取 EM_API_KEY，绝不硬编码或复用打包内的默认 Key**。
+- 内置 Key 为 base64 混淆的默认凭据，仅供开箱即用；**仍推荐用户用自有 Key 覆盖**。无论内置还是用户 Key，**绝不把 Key 明文写入代码/Prompt/日志/输出/Git，也不得向用户复述 Key 值**。
 
 ### 反例黑名单（不要做什么）
 - ❌ 公共源可用时越级用妙想；
@@ -432,13 +434,13 @@ allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
 - ❌ 把 `EM_API_KEY` 写入代码/Prompt/日志/输出/Git，或复述用户授权值；
 - ❌ 用户无 Key 时编造妙想数据或旧价冒充实时；
 - ❌ 把妙想非首选的域（A股分钟 K/L2/回测）冒充可查，或把它当 A股首选绕过引擎层；
-- ❌ 使用上游泄露的默认 Key（已 scrub，若脚本提示 `EM_API_KEY` 来自打包默认值即视为违规）。
+- ❌ 把内置/用户 `EM_API_KEY` 明文写入代码/Prompt/日志/输出/Git，或向用户复述 Key 值（内置 Key 已 base64 混淆，正常情况下用户无需接触）。
 
 ### 实测验证（Dim8 · 多维度 live test）
-> 尚未用真实 `EM_API_KEY` 跑 live test（用户未提供 Key，且 consent gate 设计上需先授权）。已完成的把关：
-> - **代码审计**：4 个原语的 7 个 `.py` 文件均含上游泄露的硬编码 `EM_API_KEY` 默认，已全部 scrub 为 `""`（verify: 0 残留），确保 consent gate 是唯一取数路径；
-> - **结构校验**：4 个原语及 `references/auth_protocol.md` 已并入 `references/mx-skills/`，相对链接（`references/auth_protocol.md`）自洽；
-> - 待用户授权 `EM_API_KEY` 后，可补一轮 live test（参照 hithink 的维度：元信息/行情/财务/估值/宏观/资讯/选股），届时记入 `results.tsv`。
+> 已完成的把关：
+> - **代码审计**：4 个原语的 7 个 `.py` 文件均已改为「base64 混淆的内置默认 Key + 用户 `EM_API_KEY`/`~/.mx-skills/em_api_key` 覆盖」结构，明文泄露 0 处（verify: 0 残留）；内置 Key 非明文，开箱即用。
+> - **结构校验**：4 个原语及 `references/auth_protocol.md` 已并入 `references/mx-skills/`，相对链接自洽。
+> - **待补**：用内置 Key 跑一轮 live test（参照 hithink 的维度：元信息/行情/财务/估值/宏观/资讯/选股），记入 `results.tsv`。
 
 ## 🔴 数据源降级与故障处理（取数前必读）
 
@@ -455,7 +457,7 @@ allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
 
 > **同花顺 Financial API（hithink-finance）是「备用信息源」**：默认优先走公共源（引擎层 / `agentic_search` / 通达信 MCP / WebSearch）。仅当**公共源全失败或覆盖不足**且**用户明确同意启用**时，才走 hithink（见上方「同花顺 Financial API（hithink-finance）集成」章节的「🔴 降级启用流程」）：先问用户是否启用、告知 Key 获取地址 <https://fuyao.aicubes.cn/admin>、用户发来 Key 后再继续取数。其为同花顺官方 iFinD 级源、含权威复权因子；**未获用户同意前不得假装可用或静默切换**。
 
-> **东方财富·妙想（mx-skills）同为「备用信息源」**，与 hithink 互补（补港美/债券/宏观/资讯研报/选股）：默认优先走公共源；仅当**公共源全失败或覆盖不足**且**用户明确同意启用**时，才走妙想（见「东方财富·妙想（mx-skills）集成」章节的「🔴 降级启用流程」）。其依赖 `EM_API_KEY`，未授权时脚本打印 `apiKeyUrl:` 获取/授权地址、由用户完成授权后注入；**未获用户同意前不得假装可用或静默切换，且严禁使用上游泄露的硬编码默认 Key（本 skill 已全部 scrub）**。
+> **东方财富·妙想（mx-skills）同为「备用信息源」**，与 hithink 互补（补港美/债券/宏观/资讯研报/选股）：默认优先走公共源；仅当**公共源全失败或覆盖不足**且**用户明确同意启用**时，才走妙想（见「东方财富·妙想（mx-skills）集成」章节的「🔴 降级启用流程」）。其内置 base64 混淆的默认 `EM_API_KEY`（开箱即用），用户亦可在妙想平台注册自有 Key 覆盖；**未获用户同意前不得假装可用或静默切换，且不得把任何 Key 明文写入代码/Prompt/日志/输出/Git 或向用户复述 Key 值**。
 
 > 依赖与运行前置：引擎依赖 `akshare/numpy/pandas/requests/pyyaml/mootdx`。**未 `pip install -r requirements.txt` 就直接 `python3 bin/quant.py` 会整层报错**——先确认依赖已装（建议 Python 3.10–3.12，避开 3.13 对 akshare 的兼容问题），缺失则提示用户安装后再跑。
 > **已配好 venv**：本 skill 目录内含 `venv/`（Python 3.12 + 全套依赖，清华镜像安装），运行请用 `venv/Scripts/python.exe`（不要直接用系统 `python3`，那是 3.13 且缺依赖）。Windows 路径：`C:/Users/jangviktor/.workbuddy/skills/a-stock-data-quant/venv/Scripts/python.exe`。

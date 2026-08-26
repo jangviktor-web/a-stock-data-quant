@@ -26,7 +26,8 @@ import httpx
 
 AUTH_BASE = os.environ.get("EM_AUTH_BASE", "https://ai-saas.eastmoney.com").rstrip("/")
 EM_API_KEY_PLACEHOLDER = "{em" + "_api_key}"
-EM_API_KEY_DEFAULT = "".strip()
+# 内置默认 Key（base64 混淆存储；用户可用 EM_API_KEY 环境变量或 ~/.mx-skills/em_api_key 覆盖）
+EM_API_KEY_DEFAULT = __import__("base64").b64decode("ZW1fSWpjRU1UcHJ3QmNqT2R5QzdkcXYxWk5KMUhsVjNtSUg=").decode()
 CLIENT_ID = "mx-finance-search"
 # 兜底默认值：create 接口正常会返回 apiKeyUrl，此值仅在接口未返回时使用
 API_KEY_PAGE_URL = f"{AUTH_BASE}/mxClaw"

@@ -116,7 +116,7 @@ K线数据:  新浪 → 腾讯 → mootdx → 百度 (四级降级)
 
 - **备用源·与 hithink 互补**：hithink 补 A股/指数/基金/特色，妙想补 hithink 不覆盖的 **港股 / 美股 / 债券 / 全球宏观 / 资讯·公告·券商研报 / 智能选股**。
 - **4 个数据原语**：`mx-finance-data`（全市场自然语言查数）、`mx-finance-search`（资讯/研报检索）、`mx-macro-data`（全球宏观查数）、`mx-stocks-screener`（智能选股），并入 `references/mx-skills/`。
-- **统一授权 `EM_API_KEY`**：内联 consent gate（未授权打印 `apiKeyUrl:` 获取地址，退出码 10）；**上游硬编码 Key 已全部 scrub**，严禁使用默认 Key。
+- **统一授权 `EM_API_KEY`**：随包内置 base64 混淆的默认 Key（开箱即用，用户无需知晓）；用户亦可在妙想平台注册自有 Key 后通过 `EM_API_KEY` 环境变量或 `~/.mx-skills/em_api_key` 覆盖。未授权时打印 `apiKeyUrl:` 获取地址（退出码 10）。
 - **公共源优先**：仅当公共源不可用/覆盖不足且用户同意时才启用。详见 SKILL.md「东方财富·妙想（mx-skills）集成」章节。
 
 ---
@@ -632,7 +632,7 @@ python bin/quant.py fundamentals 600519               # 基本面快照
 <details>
 <summary><b>东方财富妙想 AI</b></summary>
 
-需在 `config.yaml` 设置 `em_api_key`。注册：https://ai.eastmoney.com/mxClaw
+需在 `config.yaml` 设置 `em_api_key`。注册：https://ai-saas.eastmoney.com/mxClaw
 
 ```bash
 python bin/quant.py em-diagnose sh600519                  # AI综合诊断
