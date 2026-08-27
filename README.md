@@ -182,7 +182,7 @@ K线数据:  新浪 → 腾讯 → mootdx → 百度 (四级降级)
 ### 安装
 
 ```bash
-# 方式一：SkillHub（审核中）
+# 方式一：SkillHub（推荐）
 请根据 https://skillhub.cn/install/skillhub.md，安装 @user_ff4d9420/astockdataquant。
 
 # 方式二：clawhub（推荐）
