@@ -98,7 +98,8 @@ python bin/quant.py realtime 600519
 | 北向资金 | 外资通过港股通买入 A 股的资金 |
 | PE / PB | 判断股价贵不贵的估值指标 |
 
-> ⚠️ **免责声明**：本工具仅供学习研究，不构成投资建议。技术分析基于历史数据，不预测未来。
+> [!WARNING]
+> **免责声明**：本工具仅供学习研究，不构成投资建议。技术分析基于历史数据，不预测未来。
 
 
 ---
@@ -664,6 +665,22 @@ python bin/quant.py gf-quant 600519,000858,000568
 
 ## 🏗️ 多数据源架构
 
+```mermaid
+flowchart TB
+    U["用户提问 / 命令"] --> R{"路由决策"}
+    R -->|"A股·指数·基金·特色"| E["引擎层 · 公共源<br/>腾讯 · 东财 · 新浪 · akshare"]
+    R -->|"公共源失败 / 覆盖不足"| H["同花顺 hithink-finance<br/>iFinD 级 A股/基金/特色数据"]
+    R -->|"港美·债券·宏观·资讯研报·选股"| M["东方财富·妙想 mx-skills<br/>4 数据原语"]
+    E --> OUT["结构化结果（JSON / 报告）"]
+    H --> OUT
+    M --> OUT
+    style R fill:#FFE08A,stroke:#333,color:#000
+    style E fill:#C6E0B4,stroke:#333,color:#000
+    style H fill:#9DC3E6,stroke:#333,color:#000
+    style M fill:#F4B183,stroke:#333,color:#000
+    style OUT fill:#D9D2E9,stroke:#333,color:#000
+```
+
 <details>
 <summary><b>降级链总览</b></summary>
 
@@ -911,6 +928,24 @@ a-stock-data-quant/
 
 ## 📝 更新日志
 
+> [!NOTE]
+> **最新版本 v3.8.0 (2026-08-26)**：新增同花顺(hithink)备用源 + 东方财富妙想(mx-skills) 4 数据原语。引擎层 + 同花顺 + 妙想 三层叠加，覆盖全数据类型（行情 / 财务 / 宏观 / 资讯研报 / 选股）。
+
+<details open>
+<summary><b>v3.8.0 (2026-08-26) — 同花顺备用源 + 东方财富妙想(mx-skills) 4数据原语</b></summary>
+
+### 新增功能
+
+- **同花顺金融数据服务（hithink-finance）集成**：融合 `HiThink-Tech/Financial-API`，iFinD 级 A股行情/复权K线、财报三表、估值快照、指数/板块、公募基金(28端点)、特色数据(涨停跌停/异动/热榜/龙虎榜,11端点) 与全市场 Parquet 导出；CLI / MCP(4端点·55工具) / REST(59端点) / Python SDK 四种接入；统一 Key `HITHINK_FINANCE_API_KEY`（fuyao.aicubes.cn 获取），配置时优先、未配置回退引擎层。详见 `references/hithink-finance/`。
+- **东方财富·妙想（mx-skills）集成**：并入 4 个数据原语——`mx-finance-data`（全市场自然语言查数）、`mx-finance-search`（资讯/研报检索）、`mx-macro-data`（全球宏观查数）、`mx-stocks-screener`（智能选股），补 hithink 不覆盖的 港股/美股/债券/全球宏观/资讯·公告·券商研报/智能选股；作为公共源失败时的备用源，详见 `references/mx-skills/`。
+- **内置默认 Key（开箱即用）**：mx-skills 原语随包内置 base64 混淆的 `EM_API_KEY` 默认值（用户无需配置或知晓），亦支持 `EM_API_KEY` 环境变量或 `~/.mx-skills/em_api_key` 覆盖；获取/授权地址 `https://ai-saas.eastmoney.com/mxClaw`。
+
+### 行为变化
+
+- 路由策略：公共源优先，仅当公共源不可用/覆盖不足且用户同意时才启用 hithink / 妙想备用源。
+
+</details>
+
 <details open>
 <summary><b>v3.7.0 (2026-08-21) — 多市场数据层 + 研报工作流 + 决策建议</b></summary>
 
@@ -945,21 +980,6 @@ a-stock-data-quant/
 - Python 依赖：akshare 版本要求提升至 `>=1.18.64`
 - 新增独立数据层 CLI：`bin/cn/{equity,futures,research,options,macro}.py`（价量 / 期货 / 北向等为纯标准库实现）
 - 新增 `CONNECTORS.md`：连接器占位符与可选增强说明
-
-</details>
-
-<details open>
-<summary><b>v3.8.0 (2026-08-26) — 同花顺备用源 + 东方财富妙想(mx-skills) 4数据原语</b></summary>
-
-### 新增功能
-
-- **同花顺金融数据服务（hithink-finance）集成**：融合 `HiThink-Tech/Financial-API`，iFinD 级 A股行情/复权K线、财报三表、估值快照、指数/板块、公募基金(28端点)、特色数据(涨停跌停/异动/热榜/龙虎榜,11端点) 与全市场 Parquet 导出；CLI / MCP(4端点·55工具) / REST(59端点) / Python SDK 四种接入；统一 Key `HITHINK_FINANCE_API_KEY`（fuyao.aicubes.cn 获取），配置时优先、未配置回退引擎层。详见 `references/hithink-finance/`。
-- **东方财富·妙想（mx-skills）集成**：并入 4 个数据原语——`mx-finance-data`（全市场自然语言查数）、`mx-finance-search`（资讯/研报检索）、`mx-macro-data`（全球宏观查数）、`mx-stocks-screener`（智能选股），补 hithink 不覆盖的 港股/美股/债券/全球宏观/资讯·公告·券商研报/智能选股；作为公共源失败时的备用源，详见 `references/mx-skills/`。
-- **内置默认 Key（开箱即用）**：mx-skills 原语随包内置 base64 混淆的 `EM_API_KEY` 默认值（用户无需配置或知晓），亦支持 `EM_API_KEY` 环境变量或 `~/.mx-skills/em_api_key` 覆盖；获取/授权地址 `https://ai-saas.eastmoney.com/mxClaw`。
-
-### 行为变化
-
-- 路由策略：公共源优先，仅当公共源不可用/覆盖不足且用户同意时才启用 hithink / 妙想备用源。
 
 </details>
 
