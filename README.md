@@ -1,20 +1,17 @@
 
 <div align="center">
 
-<img width="220"  alt="logo" src="https://github.com/user-attachments/assets/fe39349c-3a46-4342-bf9a-ec258493270c" />
+<img width="220" alt="logo" src="https://github.com/user-attachments/assets/fe39349c-3a46-4342-bf9a-ec258493270c" />
 
-# A股量化分析工具箱
+# A股量化分析工具箱 · A-Share Data Quant
 
-### A-Share Data Quant
-
-**技术指标 · 形态识别 · 策略回测 · 实时行情 · 多源降级 · AI金融分析 · 筹码分布 · 板块资金流 · F10财务 · 华尔街见闻 · 研报/公告/互动易**
+**20+ 技术指标 · 7 种回测策略 · 多源自动降级 · 港股/期货/期权/宏观 · 东方财富妙想 AI · 同花顺 iFinD · 广发 MCP · F10 财务 · 研报/公告/互动易**
 
 <br>
 
-<!-- 徽章行 -->
 [![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Version](https://img.shields.io/badge/Version-v3.8.0-ff69b4?style=for-the-badge)](https://github.com/jangviktor-web/a-stock-data-quant/releases)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/Version-v3.8.1-ff69b4?style=for-the-badge)](https://github.com/jangviktor-web/a-stock-data-quant/releases)
+[![License](https://img.shields.io/badge/License-MIT--0-green?style=for-the-badge)](https://opensource.org/licenses/MIT-0)
 [![A-Share](https://img.shields.io/badge/A股-量化分析-red?style=for-the-badge)](https://github.com/jangviktor-web/a-stock-data-quant)
 
 <br>
@@ -26,13 +23,125 @@
 
 <br>
 
-基于 [akshare](https://github.com/akfamily/akshare) + [MyTT](https://github.com/mpquant/MyTT) 构建
+基于 [akshare](https://github.com/akfamily/akshare) + [MyTT](https://github.com/mpquant/MyTT) + [Ashare](https://github.com/mpquant/Ashare) 构建
 
 数据源: akshare · 百度财经 · 通达信 · 东财数据中心 · 同花顺 · 腾讯 · 华尔街见闻 · 巨潮资讯 · 广发MCP
 
 </div>
 
 ---
+
+### 一句话介绍
+
+把 A股/港股行情、技术指标、量化回测、AI 金融分析、筹码分布、板块资金流、F10 财务、研报公告，打包成一个可被 AI Agent 直接调用的技能——**自然语言提问即可，无需记命令**。
+
+**直接提问词**：`茅台现在什么价？` / `分析 300750 技术面` / `今天大盘怎么样` / `沪深300ETF该不该买` / `宁德时代资金流`
+
+> [!WARNING]
+> **免责声明**：本工具仅供学习研究，**不构成任何投资建议**。技术分析基于历史数据，不预测未来；据此操作风险自负。
+
+---
+
+## 📑 目录
+
+- [🚀 快速安装](#-快速安装)
+- [📊 功能矩阵](#-功能矩阵)
+- [💡 使用示例](#-使用示例)
+- [🎓 新手零基础快速上手](#-新手零基础快速上手)
+- [⚡ 快速开始](#-快速开始)
+- [📋 命令一览](#-命令一览)
+- [📖 详细使用指南](#-详细使用指南)
+- [🏗️ 多数据源架构](#️-多数据源架构)
+- [⚙️ 配置管理](#️-配置管理)
+- [📐 技术指标 & 形态识别](#-技术指标--形态识别)
+- [📁 项目结构](#-项目结构)
+- [🔄 数据流](#-数据流)
+- [📝 更新日志](#-更新日志)
+- [🔗 相关项目](#-相关项目)
+- [🙏 致谢](#-致谢)
+- [⭐ Star History](#-star-history)
+- [⚠️ 免责声明](#️-免责声明)
+
+---
+
+## 🚀 快速安装
+
+<details open>
+<summary><b> SkillHub（推荐）</b></summary>
+
+```bash
+# 请根据 https://skillhub.cn/install/skillhub.md，安装 @user_ff4d9420/astockdataquant
+```
+
+</details>
+
+<details>
+<summary><b>ClawHub（推荐）</b></summary>
+
+```bash
+# 请根据下方命令安装 skill
+openclaw skills install @jangviktor-web/a-stock-data-quant
+```
+
+</details>
+
+<details>
+<summary><b>直接克隆（命令行使用）</b></summary>
+
+```bash
+git clone https://github.com/jangviktor-web/a-stock-data-quant.git
+cd a-stock-data-quant
+pip install -r requirements.txt
+```
+
+</details>
+
+---
+
+## 📊 功能矩阵
+
+| 能力 | 覆盖范围 | 说明 |
+|:---|:---:|:---|
+| 行情数据 | ✅ | A股/港股实时+历史K线，腾讯→东财→mootdx 三级自动降级 |
+| 技术指标 | ✅ | MA/MACD/RSI/KDJ/BOLL/CCI/ATR/OBV 等 20+ 指标 |
+| 形态识别 | ✅ | W底 / 杯柄 / 三重底 / V型反转 / 回踩 / Zigzag |
+| 策略回测 | ✅ | 7 种策略（buy_hold/ma_cross/macd/rsi/boll/kdj/ensemble）+ HTML 图表 |
+| 筹码分布 | ✅ | 换手率衰减+高斯核，平均成本/获利比例/集中度 |
+| 板块资金流 | ✅ | 行业/概念板块主力净流入排名 |
+| F10 财务 | ✅ | 营收/净利/ROE/毛利率/资产负债率多期趋势 |
+| 资讯研报 | ✅ | 华尔街见闻 11 频道 + 东财研报 + 巨潮互动易 |
+| 多市场 | ✅ | 港股 / 期货 / 期权 / 宏观（CN 数据层） |
+| AI 金融分析 | ✅ | 东方财富妙想（诊断/选股/问答/资讯/基金） |
+| 同花顺 iFinD | ✅ | hithink-finance 备用源（A股/基金/特色，CLI/MCP/REST/SDK） |
+| 广发 MCP | ✅ | ETF 排行 / 龙虎榜 / 指数估值 / 财务对比 |
+| 市场温度 | ✅ | 5 维度加权 0-100 温度计 + 估值分位 |
+
+---
+
+## 💡 使用示例
+
+**查行情**
+
+> **Q**：茅台现在什么价？
+> **A**：`python bin/quant.py realtime sh600519` → 最新价 / 涨跌幅 / 成交量 / 成交额（腾讯→东财→mootdx 自动降级）。
+
+**技术分析**
+
+> **Q**：帮我分析一下 300750 的技术面
+> **A**：`python bin/quant.py analyze sz300750` → 指标 + 形态 + 策略信号 + 回测，一次出完整报告。
+
+**资金流**
+
+> **Q**：宁德时代最近资金流如何？
+> **A**：`python bin/quant.py fund sz300750` 看主力流向，或 `board-flow` 看板块主力净流入。
+
+**AI 诊断**
+
+> **Q**：沪深300ETF 该不该买？
+> **A**：`python bin/quant.py em-diagnose sh510300` → 基本面+技术面+资金面+估值综合诊断（内置默认 Key，开箱即用）。
+
+---
+
 ## 🎓 新手零基础快速上手
 
 **这个工具是干什么的？** 一句话：帮你查 **A股 / 港股行情**、看**技术指标**、做**量化回测**，还能给出**买卖分析**。不用会写代码，装好就能用。
@@ -98,99 +207,18 @@ python bin/quant.py realtime 600519
 | 北向资金 | 外资通过港股通买入 A 股的资金 |
 | PE / PB | 判断股价贵不贵的估值指标 |
 
-> [!WARNING]
-> **免责声明**：本工具仅供学习研究，不构成投资建议。技术分析基于历史数据，不预测未来。
-
-
 ---
 
-## 📑 目录
-
-<details open>
-<summary><b>点击展开/收起</b></summary>
-
-- [✨ 特性亮点](#-特性亮点)
-- [🎓 新手零基础快速上手](#-新手零基础快速上手)
-- [🚀 快速开始](#-快速开始)
-- [📊 命令一览](#-命令一览)
-- [📖 详细使用指南](#-详细使用指南)
-- [🏗️ 多数据源架构](#️-多数据源架构)
-- [⚙️ 配置管理](#️-配置管理)
-- [📐 技术指标 & 形态识别](#-技术指标--形态识别)
-- [📁 项目结构](#-项目结构)
-- [🔄 数据流](#-数据流)
-- [📝 更新日志](#-更新日志)
-- [🙏 致谢](#-致谢)
-
-</details>
-
----
-
-## ✨ 特性亮点
-
-<div align="center">
-
-| | | |
-| :---: | :---: | :---: |
-| 🔄 **多源降级** | 🤖 **AI金融分析** | 📊 **20+技术指标** |
-| 主源失效自动切换备用源 | 东方财富妙想免费AI | MA/MACD/RSI/KDJ/BOLL… |
-| 🎯 **7种回测策略** | 🧮 **筹码分布** | 💰 **板块资金流** |
-| buy_hold/ma_cross/macd… | 换手率衰减+高斯核算法 | 行业/概念主力净流入 |
-| 📈 **F10财务** | 📰 **全球快讯** | 📋 **研报/公告** |
-| 营收/净利/ROE/毛利率 | 华尔街见闻11频道 | 东财研报+巨潮互动易 |
-| 🌡️ **市场温度** | 📉 **估值分位** | 🏦 **广发MCP** |
-| 5维度加权0-100 | PE/PB/PS历史百分位 | ETF排行/龙虎榜/指数估值 |
-
-</div>
-
-### 多数据源自动降级
-
-```
-akshare 失败 → 百度财经 / 通达信 / 东财数据中心 / 同花顺
-实时行情: 腾讯 → 东方财富 → mootdx (三级降级)
-K线数据:  新浪 → 腾讯 → mootdx → 百度 (四级降级)
-```
-
-降级过程对用户透明，stderr 输出 `[降级]` 提示，不影响正常输出。
-
-### 广发MCP数据矩阵
-
-- **ETF排行榜**: 13种榜单 (涨幅/跌幅/规模/换手率/资金流等)
-- **龙虎榜深度**: 上榜排行/指定日期查询/营业部统计/日历视图
-- **指数估值分位**: PE/PB百分位 + 低估/合理/高估评估 + 关联ETF
-- **财务对比**: 市值/PE/PB/行业均值/历史百分位
-
-### 同花顺金融数据服务（hithink-finance）集成
-
-- **iFinD 级权威源**：经 `HiThink-Tech/Financial-API` 融合，提供 A股行情/复权K线、财报三表、估值快照、集合竞价、指数/板块、公募基金(28端点)、特色数据(涨停跌停/异动/热榜/龙虎榜,11端点) 与全市场 Parquet 导出。
-- **四种接入**：CLI / MCP(4端点·55工具) / REST(59端点) / Python SDK，统一 Key `HITHINK_FINANCE_API_KEY`（fuyao.aicubes.cn 获取）。
-- **互补不替代**：配置 Key 时优先走 hithink（数据更全、含权威复权因子）；未配置回退引擎层。详见 `references/hithink-finance/`。
-
-### 东方财富·妙想（mx-skills）集成（v3.8.0 新增）
-
-- **备用源·与 hithink 互补**：hithink 补 A股/指数/基金/特色，妙想补 hithink 不覆盖的 **港股 / 美股 / 债券 / 全球宏观 / 资讯·公告·券商研报 / 智能选股**。
-- **4 个数据原语**：`mx-finance-data`（全市场自然语言查数）、`mx-finance-search`（资讯/研报检索）、`mx-macro-data`（全球宏观查数）、`mx-stocks-screener`（智能选股），并入 `references/mx-skills/`。
-- **统一授权 `EM_API_KEY`**：随包内置 base64 混淆的默认 Key（开箱即用，用户无需知晓）；用户亦可在妙想平台注册自有 Key 后通过 `EM_API_KEY` 环境变量或 `~/.mx-skills/em_api_key` 覆盖。获取/授权地址以脚本运行打印的 `apiKeyUrl:` 为准（`https://ai-saas.eastmoney.com/mxClaw`）。
-- **公共源优先**：仅当公共源不可用/覆盖不足且用户同意时才启用。详见 SKILL.md「东方财富·妙想（mx-skills）集成」章节。
-
----
-
-
-
-## 🚀 快速开始
+## ⚡ 快速开始
 
 ### 安装
 
 ```bash
-# 方式一：SkillHub（推荐）
-请根据 https://skillhub.cn/install/skillhub.md，安装 @user_ff4d9420/astockdataquant。
+# SkillHub（推荐）：请根据 https://skillhub.cn/install/skillhub.md，安装 @user_ff4d9420/astockdataquant
+# ClawHub（推荐）：openclaw skills install @jangviktor-web/a-stock-data-quant
 
-# 方式二：clawhub（推荐）
-请根据 openclaw skills install @jangviktor-web/a-stock-data-quant，安装skill。
-
-# 方式三：直接克隆
-
-请根据git clone https://github.com/jangviktor-web/a-stock-data-quant.git
+# 或直接克隆：
+git clone https://github.com/jangviktor-web/a-stock-data-quant.git
 cd a-stock-data-quant
 pip install -r requirements.txt
 安装skill。
@@ -273,7 +301,7 @@ python bin/cn/research.py etf-list / cb-list             # ETF/可转债列表
 
 ---
 
-## 📊 命令一览
+## 📋 命令一览
 
 <details open>
 <summary><b>核心分析 (8个命令)</b></summary>
@@ -623,7 +651,7 @@ python bin/quant.py fundamentals 600519               # 基本面快照
 <details>
 <summary><b>东方财富妙想 AI</b></summary>
 
-需在 `config.yaml` 设置 `em_api_key`。注册：https://ai.eastmoney.com/mxClaw
+随包内置 base64 混淆的 `EM_API_KEY` 默认值（开箱即用），亦可在 `config.yaml` 设置 `em_api_key` 覆盖，或注册自有 Key：https://ai-saas.eastmoney.com/mxClaw
 
 ```bash
 python bin/quant.py em-diagnose sh600519                  # AI综合诊断
@@ -685,6 +713,36 @@ flowchart TB
     style OUT fill:#D9D2E9,stroke:#333,color:#000
 ```
 
+### 多数据源自动降级
+
+```
+akshare 失败 → 百度财经 / 通达信 / 东财数据中心 / 同花顺
+实时行情: 腾讯 → 东方财富 → mootdx (三级降级)
+K线数据:  新浪 → 腾讯 → mootdx → 百度 (四级降级)
+```
+
+降级过程对用户透明，stderr 输出 `[降级]` 提示，不影响正常输出。
+
+### 广发MCP数据矩阵
+
+- **ETF排行榜**: 13种榜单 (涨幅/跌幅/规模/换手率/资金流等)
+- **龙虎榜深度**: 上榜排行/指定日期查询/营业部统计/日历视图
+- **指数估值分位**: PE/PB百分位 + 低估/合理/高估评估 + 关联ETF
+- **财务对比**: 市值/PE/PB/行业均值/历史百分位
+
+### 同花顺金融数据服务（hithink-finance）集成
+
+- **iFinD 级权威源**：经 `HiThink-Tech/Financial-API` 融合，提供 A股行情/复权K线、财报三表、估值快照、集合竞价、指数/板块、公募基金(28端点)、特色数据(涨停跌停/异动/热榜/龙虎榜,11端点) 与全市场 Parquet 导出。
+- **四种接入**：CLI / MCP(4端点·55工具) / REST(59端点) / Python SDK，统一 Key `HITHINK_FINANCE_API_KEY`（fuyao.aicubes.cn 获取）。
+- **互补不替代**：配置 Key 时优先走 hithink（数据更全、含权威复权因子）；未配置回退引擎层。详见 `references/hithink-finance/`。
+
+### 东方财富·妙想（mx-skills）集成（v3.8.0 新增）
+
+- **备用源·与 hithink 互补**：hithink 补 A股/指数/基金/特色，妙想补 hithink 不覆盖的 **港股 / 美股 / 债券 / 全球宏观 / 资讯·公告·券商研报 / 智能选股**。
+- **4 个数据原语**：`mx-finance-data`（全市场自然语言查数）、`mx-finance-search`（资讯/研报检索）、`mx-macro-data`（全球宏观查数）、`mx-stocks-screener`（智能选股），并入 `references/mx-skills/`。
+- **统一授权 `EM_API_KEY`**：随包内置 base64 混淆的默认 Key（开箱即用，用户无需知晓）；用户亦可在妙想平台注册自有 Key 后通过 `EM_API_KEY` 环境变量或 `~/.mx-skills/em_api_key` 覆盖。获取/授权地址 `https://ai-saas.eastmoney.com/mxClaw`。
+- **公共源优先**：仅当公共源不可用/覆盖不足且用户同意时才启用。详见 SKILL.md「东方财富·妙想（mx-skills）集成」章节。
+
 <details>
 <summary><b>降级链总览</b></summary>
 
@@ -737,8 +795,11 @@ def get_fund_flow(code, market=None):
 ```yaml
 # config.yaml — 复制 config.yaml.example 后填入
 
-# 东方财富妙想 AI (免费)
+# 东方财富妙想 AI (免费，随包内置默认 Key，可在此覆盖)
 em_api_key: "em_xxxxxxxxxxxxxxxx"
+
+# 同花顺 hithink-finance API Key (可选，配置时优先)
+hithink_finance_api_key: "your-hithink-key"
 
 # 广发MCP数据 API Key
 gf_api_key: "your-gf-api-key"
@@ -867,12 +928,14 @@ a-stock-data-quant/
 │   └── valuation.py          # 个股估值分位 (东财datacenter+百度)
 ├── references/
 │   ├── multi-market/        # 多市场数据层字段/路由/源文档
+│   ├── hithink-finance/     # 同花顺金融数据服务文档
+│   ├── mx-skills/           # 东方财富妙想 4 数据原语文档
 │   └── research-workflows/   # 研报写作工作流（读年报/可比/深度/快评/纪要/行业/晨会/摘要）
 ├── CONNECTORS.md             # 连接器占位符与可选增强说明
 ├── config.yaml.example       # 配置模板 (密钥需自行申请)
 ├── SKILL.md                  # AI Agent skill 文档
 ├── requirements.txt          # Python 依赖
-└── LICENSE                   # MIT
+└── LICENSE                   # MIT-0
 ```
 
 ---
@@ -933,7 +996,16 @@ a-stock-data-quant/
 ## 📝 更新日志
 
 > [!NOTE]
-> **最新版本 v3.8.0 (2026-08-26)**：新增同花顺(hithink)备用源 + 东方财富妙想(mx-skills) 4 数据原语。引擎层 + 同花顺 + 妙想 三层叠加，覆盖全数据类型（行情 / 财务 / 宏观 / 资讯研报 / 选股）。
+> **最新版本 v3.8.1 (2026-08-28)**：OpenClaw 格式合规（metadata.openclaw 声明可选环境变量 + MIT-0 协议 + .clawhubignore）。数据能力延续 v3.8.0——同花顺(hithink) 备用源 + 东方财富妙想(mx-skills) 4 数据原语。引擎层 + 同花顺 + 妙想 三层叠加，覆盖全数据类型（行情 / 财务 / 宏观 / 资讯研报 / 选股）。
+
+<details open>
+<summary><b>v3.8.1 (2026-08-28) — OpenClaw 格式合规</b></summary>
+
+- **协议**：MIT → **MIT-0**（ClawHub 强制要求）
+- **metadata.openclaw**：声明可选环境变量 `EM_API_KEY` / `HITHINK_FINANCE_API_KEY`（均为可选，内置默认 Key 兜底）
+- **.clawhubignore**：发布卫生，排除 venv / cache / results.tsv 等
+
+</details>
 
 <details open>
 <summary><b>v3.8.0 (2026-08-26) — 同花顺备用源 + 东方财富妙想(mx-skills) 4数据原语</b></summary>
@@ -1066,6 +1138,24 @@ a-stock-data-quant/
 
 ---
 
+## 🔗 相关项目
+
+<div align="center">
+
+### [策盈QuantWin · 股票K线分析 App](https://github.com/jangviktor-web/finance_chart)
+
+同一作者的 Flutter 跨平台股票 K 线 App，与本项目共享同一套行情/指标数据栈。Android 优先，覆盖代码质量、架构、性能与安全的持续优化。
+
+| 共享能力 | 说明 |
+|:---:|:---|
+| 行情 + 技术指标 | 复用 akshare / MyTT 同源数据逻辑 |
+| K 线图表 | 交互式蜡烛图 + 多指标叠加 |
+| 多周期 | 日/周/月/分钟线 |
+
+</div>
+
+---
+
 ## 🙏 致谢
 
 <div align="center">
@@ -1089,9 +1179,22 @@ a-stock-data-quant/
 
 ---
 
+## ⭐ Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=jangviktor-web/a-stock-data-quant&type=Date)](https://star-history.com/#jangviktor-web/a-stock-data-quant&Date)
+
+---
+
+## ⚠️ 免责声明
+
+> [!WARNING]
+> 本工具所有数据来自公开第三方接口，仅供学习与研究使用，**不构成任何投资建议或证券交易邀请**。市场有风险，投资需谨慎；任何依据本工具输出做出的交易决策，风险与后果由使用者自行承担。
+
+---
+
 <div align="center">
 
-**License**: MIT
+**License**: MIT-0
 
 **Stars**: 如果这个项目对你有帮助，请给一个 ⭐ Star 支持一下！
 
