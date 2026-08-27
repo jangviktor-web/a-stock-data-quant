@@ -1181,7 +1181,7 @@ a-stock-data-quant/
 
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=jangviktor-web/a-stock-data-quant&type=Date)](https://star-history.com/#jangviktor-web/a-stock-data-quant&Date)
+[![RepoStars](https://repostars.dev/api/embed?repo=jangviktor-web%2Fa-stock-data-quant&theme=grape)](https://repostars.dev/?repos=jangviktor-web%2Fa-stock-data-quant&theme=grape)
 
 ---
 
