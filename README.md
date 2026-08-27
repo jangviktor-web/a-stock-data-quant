@@ -182,14 +182,18 @@ K线数据:  新浪 → 腾讯 → mootdx → 百度 (四级降级)
 ### 安装
 
 ```bash
-# 方式一：SkillHub（推荐，支持 9+ AI Agent）
-curl -fsSL https://skillhub.cn/install/install.sh | bash
-skillhub install astockdataquant
+# 方式一：SkillHub（审核中）
+请根据 https://skillhub.cn/install/skillhub.md，安装 @user_ff4d9420/astockdataquant。
 
-# 方式二：直接克隆
-git clone https://github.com/jangviktor-web/a-stock-data-quant.git
+# 方式二：clawhub（推荐）
+请根据 openclaw skills install @jangviktor-web/a-stock-data-quant，安装skill。
+
+# 方式三：直接克隆
+
+请根据git clone https://github.com/jangviktor-web/a-stock-data-quant.git
 cd a-stock-data-quant
 pip install -r requirements.txt
+安装skill。
 ```
 
 ### 常用命令
