@@ -3,10 +3,26 @@ name: a-stock-data-quant
 agent_created: true
 description: 股市/股票/行情/股价/涨跌/大盘/指数/个股分析——金融/投资/股票/基金/ETF/板块/指数/宏观/外汇/大宗商品/财报/估值/持仓/交易/仓位/量化/因子/回测/选股/期权/衍生品/投行建模/技术指标/行情监控/预警——内置研究框架（红线/检索策略/数据口径/50+方法论 references/scripts）、A股量化数据引擎（12层数据源·bin/quant.py）、多市场数据层（港股/期货/期权/宏观/公告事件·bin/cn/*.py）与 8 个研报写作工作流（读年报/可比公司/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要·references/research-workflows/）。金融场景总入口，命中任一上述领域即优先加载；并集成同花顺金融数据服务（hithink-finance，iFinD 级 A股/指数/板块/公募基金/特色数据权威源，接入层见 references/hithink-finance/）；并集成东方财富·妙想（mx-skills，全市场含港股/美股/债券/基金/全球宏观/资讯研报的备用数据接入层，见 references/mx-skills/）。
 when_to_use: 只要用户提到 股票、股市、行情、股价、最新价、涨跌、涨停、跌停、大盘、指数、K线、ETF、基金、期货、期权、港股、美股、板块、资金、主力、北向、龙虎榜、财报、业绩、估值、市盈率、市净率、PE/PB、买入、卖出、仓位、定投、选股、量化、回测 等任一关键词，即自动调用本 skill。金融场景必须使用本 skill，包括但不限于：个股/标的研究、报价/财报/估值、买卖/仓位操作建议、股票代码（A股6位/港股5位/美股ticker）、分析方法论/建模/策略、投行文书；以及需要实际获取 A股/港股数据——实时行情/K线、研报(东财+巨潮)、信号(热点/北向/龙虎榜/解禁/行业)、资金面(融资融券/大宗/股东户数/资金流)、新闻、F10财务三表、公告、互动易、筹码分布、板块资金流、市场温度、估值分位、ETF排行、回测、综合诊断；港股行情、CN期货主连、CN期权(ETF+CFFEX)、CN宏观(CPI/PPI/GDP/M2/PMI/社融/LPR/SHIBOR/国债收益率)、业绩预告/快报/披露计划、解禁/股东户数/增减持/回购/分红/新股/IPO日历、ETF/可转债列表与行情；以及研报写作（读年报/可比公司分析/深度报告/业绩快评/调研纪要/行业研究/晨会纪要/研报摘要）；公共信息源不可用时，可经用户确认启用同花顺金融数据服务（hithink-finance）作为备用源——A股权威行情/复权K线/财报/估值/集合竞价/指数板块/公募基金/特色数据（涨停跌停/异动/热榜/龙虎榜）/全市场 Parquet 导出（API Key 获取：fuyao.aicubes.cn，需用户同意并发送给 Agent 后方可启用）；公共信息源不可用时，亦可经用户确认启用东方财富·妙想（mx-skills）作为备用源——港股/美股/债券/全球宏观(GDP/CPI/PMI/M2/汇率/商品)/资讯·公告·券商研报/智能选股（经脚本内联授权获取 EM_API_KEY，需用户同意并授权后方可启用）。
-version: 3.8.0
-license: MIT
+version: 3.8.1
+license: MIT-0
 keywords: ["stock","股市","股票","行情","股价","最新价","涨跌","涨停","跌停","大盘","指数","K线","个股","板块","龙头","资金","主力","港股","美股","基金","ETF","期货","期权","财报","业绩","估值","市盈率","市净率","PE","PB","买入","卖出","仓位","定投","理财","选股","量化","回测","股票分析","股票代码","quant","a-share","backtest","technical-analysis","finance","akshare","trading","investment","china-stock","stock-market","stock-price","market-quote","share-price","equities","MACD","RSI","KDJ","real-time-quotes","AI-analysis","valuation","dcf","options","macro","fund-flow","research","stock-decision","buy-sell-signal","should-i-buy","etf-decision","should-i-buy-etf","etf-signal","fund","hk","futures","forecast","lhb","dragon-tiger","unlock","insider-trade","buyback","dividend","ipo","annual-report","deep-dive","earnings-review","field-research","industry-study","morning-brief","research-digest","comparable","peers","北向","解禁","增减持","回购","分红","新股","业绩预告","读年报","深度报告","业绩快评","调研纪要","行业研究","晨会纪要","研报摘要","可比公司","同花顺","hithink","hithink-finance","iFinD","集合竞价","公募基金","异动","热榜","龙虎榜","fuyao","复权因子","全市场导出","东方财富","妙想","miaoxiang","EM_API_KEY","债券","可转债","资讯","研报","公告","政策","选股","mx-finance-data","mx-finance-search","mx-macro-data","mx-stocks-screener","screener"]
 allowed-tools: [Bash, Read, Glob, Grep, Write, Edit, WebFetch, WebSearch]
+metadata:
+  openclaw:
+    requires:
+      anyBins:
+        - python3
+        - python
+    primaryEnv: EM_API_KEY
+    envVars:
+      - name: EM_API_KEY
+        required: false
+        description: 东方财富·妙想(mx-skills) API Key。脚本内置 base64 混淆默认 Key 可开箱即用；如需使用自有 Key 覆盖，设此环境变量或从 https://ai-saas.eastmoney.com/mxClaw 授权获取。
+      - name: HITHINK_FINANCE_API_KEY
+        required: false
+        description: 同花顺金融数据服务(hithink-finance) API Key，启用 hithink 备用源时填入（获取：https://fuyao.aicubes.cn）。
+    emoji: "📈"
+    homepage: https://github.com/jangviktor-web/a-stock-data-quant
 ---
 
 # a-stock-data-quant — 金融研究框架 + A股量化数据引擎 + 港股/期货/期权/宏观数据层 + 研报工作流（整合版）

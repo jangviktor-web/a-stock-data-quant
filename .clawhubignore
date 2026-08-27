@@ -1,0 +1,16 @@
+# ClawHub publish ignore — mirror of .gitignore plus publish hygiene
+venv/
+__pycache__/
+*.pyc
+cache/
+html/
+*.bak.*
+node_modules/
+
+# local-only logs / scratch (never publish)
+results.tsv
+test-prompts.json
+
+# ClawHub CLI state
+.clawhub/
+.clawdhub
